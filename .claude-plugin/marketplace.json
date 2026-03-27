@@ -1,0 +1,25 @@
+{
+  "name": "yuzq-plugins",
+  "owner": {
+    "name": "yuzq",
+    "email": "yuzqmr@foxmail.com"
+  },
+  "metadata": {
+    "description": "yuzq 的 Claude Code 插件市场",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "demo-plugin",
+      "source": "./plugins/demo-plugin",
+      "description": "演示插件 - 包含基本功能示例",
+      "version": "1.0.0",
+      "author": {
+        "name": "yuzq",
+        "email": "yuzqmr@foxmail.com"
+      },
+      "keywords": ["demo", "example"],
+      "category": "utility"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "name": "demo-plugin",
+  "description": "演示插件 - 包含基本功能示例",
+  "version": "1.0.0",
+  "author": {
+    "name": "yuzq",
+    "email": "yuzqmr@foxmail.com"
+  },
+  "keywords": ["demo", "example"],
+  "license": "MIT"
+}
