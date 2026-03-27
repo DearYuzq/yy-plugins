@@ -20,6 +20,18 @@
       },
       "keywords": ["demo", "example"],
       "category": "utility"
+    },
+    {
+      "name": "ai-dev-create",
+      "source": "./plugins/ai-dev-create",
+      "description": "多阶段需求澄清 + SDD/TDD 开发插件，支持发散→收敛流程、多 Agent 协作和按需加载",
+      "version": "2.0.0",
+      "author": {
+        "name": "yuzq",
+        "email": "yuzqmr@foxmail.com"
+      },
+      "keywords": ["sdd", "tdd", "multi-agent", "orchestration", "clarification", "divergent", "convergent", "red-team", "blue-team", "springboot", "typescript", "python"],
+      "category": "development"
     }
   ]
 }

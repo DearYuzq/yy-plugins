@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "github": {
+      "command": "gh",
+      "args": ["mcp", "start"],
+      "description": "GitHub API 集成，支持 PR、Issue、代码审查等"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/context7-mcp-server"],
+      "description": "最新文档查询，支持各种库和框架"
+    }
+  },
+  "disabledMcpServers": []
+}
