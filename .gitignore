@@ -1,0 +1,6 @@
+# Claude Code 相关
+CLAUDE.md
+.claude/
+
+# Node modules
+node_modules/
