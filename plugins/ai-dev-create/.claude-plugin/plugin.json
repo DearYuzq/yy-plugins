@@ -6,11 +6,56 @@
     "name": "yuzq"
   },
   "license": "MIT",
-  "agents": ["agents/*.md"],
-  "skills": ["skills/*/SKILL.md"],
-  "commands": ["commands/*.md"],
-  "hooks": "hooks/hooks.json",
-  "mcpServers": ".mcp.json",
+  "agents": ["./agents"],
+  "skills": ["./skills"],
+  "commands": ["./commands"],
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/session-start.js\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/quality-check.js\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/session-save.js\""
+          }
+        ]
+      }
+    ]
+  },
+  "mcpServers": {
+    "github": {
+      "command": "gh",
+      "args": ["mcp", "start"],
+      "description": "GitHub API 集成，支持 PR、Issue、代码审查等"
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/context7-mcp-server"],
+      "description": "最新文档查询，支持各种库和框架"
+    }
+  },
   "keywords": ["sdd", "tdd", "multi-agent", "orchestration", "clarification", "divergent", "convergent", "red-team", "blue-team", "springboot", "typescript", "python"],
   "repository": "https://github.com/yuzq/ai-dev-create"
 }
