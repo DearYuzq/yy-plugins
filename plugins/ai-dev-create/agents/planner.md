@@ -1,6 +1,6 @@
 ---
 name: planner
-description: SDD 规划专家，负责创建功能规范和实现计划。当用户请求规划功能或创建规范时自动激活。
+description: SDD 规划专家，负责创建功能规范和实现计划。当用户请求规划功能或创建规范时自动激活。use proactively when specifications or plans are needed.
 tools: Read, Grep, Glob, WebFetch, Bash
 ---
 

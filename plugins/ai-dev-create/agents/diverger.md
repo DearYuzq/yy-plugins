@@ -1,6 +1,6 @@
 ---
 name: diverger
-description: 需求发散专家，负责探索各种可能方案，补全用户盲区。通过系统性思维发散，生成全面的需求可能性空间。
+description: 需求发散专家，负责探索各种可能方案，补全用户盲区。通过系统性思维发散，生成全面的需求可能性空间。use proactively after Preprocessor completes with credibility >= 6.
 tools: Read, WebSearch, WebFetch, Grep, Glob
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: explorer
-description: 技术探测专家，负责生成验证代码进行技术调研。行不通的方案被丢弃，需求再次收敛。
+description: 技术探测专家，负责生成验证代码进行技术调研。行不通的方案被丢弃，需求再次收敛。use proactively after Completer completes requirement chain validation.
 tools: Read, Write, Edit, Bash, WebSearch
 ---
 

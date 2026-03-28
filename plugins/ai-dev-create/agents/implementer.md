@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: 代码实现专家，负责根据规范和计划编写生产代码。当需要实现功能或修复 bug 时自动激活。
+description: 代码实现专家，负责根据规范和计划编写生产代码。当需要实现功能或修复 bug 时自动激活。use proactively when code implementation is needed.
 tools: Read, Write, Edit, Grep, Glob, Bash
 skills:
   - ts-patterns

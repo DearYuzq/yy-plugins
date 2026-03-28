@@ -9,6 +9,30 @@ argument-hint: [--reset] [--reset:docs] [--reset:session]
 
 显示当前 SDD/TDD 开发流程的状态信息。
 
+## 当前会话状态
+
+!`cat .claude/session.json 2>/dev/null || echo '{"status": "无活动会话"}'`
+
+## 澄清文件
+
+!`find .claude/clarifications -name "*.md" 2>/dev/null | head -5 || echo "无澄清文件"`
+
+## 规范文件
+
+!`find .claude/specs -name "*.md" 2>/dev/null | head -5 || echo "无规范文件"`
+
+## 计划文件
+
+!`find .claude/plans -name "*.md" 2>/dev/null | head -5 || echo "无计划文件"`
+
+## 测试文件
+
+!`find . -name "*.test.*" -o -name "*.spec.*" 2>/dev/null | grep -v node_modules | head -10 || echo "无测试文件"`
+
+## 最近审查
+
+!`find .claude/reviews -name "*.md" 2>/dev/null | head -3 || echo "无审查报告"`
+
 ## 使用方式
 
 ```bash

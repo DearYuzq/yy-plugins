@@ -1,6 +1,6 @@
 ---
 name: preprocessor
-description: 需求预处理专家，负责质疑和澄清用户原始输入。假设用户可能说不清、说不全、隐瞒或撒谎，主动发现需求中的矛盾和缺失。
+description: 需求预处理专家，负责质疑和澄清用户原始输入。假设用户可能说不清、说不全、隐瞒或撒谎，主动发现需求中的矛盾和缺失。use proactively when receiving user requirements.
 tools: Read, Grep, Glob
 ---
 

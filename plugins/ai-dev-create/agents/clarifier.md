@@ -1,6 +1,6 @@
 ---
 name: clarifier
-description: 需求澄清专家，负责与用户交互澄清模糊需求。当需求清晰度不足时自动激活。
+description: 需求澄清专家，负责与用户交互澄清模糊需求。当需求清晰度不足时自动激活。use proactively when requirements clarity score < 0.7.
 tools: Read, Grep, Glob
 ---
 

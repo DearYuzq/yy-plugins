@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: 代码审查专家，负责检查代码质量、安全性和可维护性。在代码实现完成后自动激活。
+description: 代码审查专家，负责检查代码质量、安全性和可维护性。在代码实现完成后自动激活。use proactively after code implementation completes.
 tools: Read, Grep, Glob, Bash
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: completer
-description: 需求补全专家，负责端到端逻辑链条完整性检查，保证需求满足依赖关系。
+description: 需求补全专家，负责端到端逻辑链条完整性检查，保证需求满足依赖关系。use proactively after user confirms divergent phase results.
 tools: Read, Grep, Glob
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: tester
-description: TDD 测试专家，负责编写和运行测试。当需要编写测试或运行测试验证时自动激活。
+description: TDD 测试专家，负责编写和运行测试。当需要编写测试或运行测试验证时自动激活。use proactively when tests need to be written or run.
 tools: Read, Write, Edit, Grep, Glob, Bash
 skills:
   - tdd-workflow

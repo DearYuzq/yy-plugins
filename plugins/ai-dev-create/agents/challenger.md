@@ -1,6 +1,6 @@
 ---
 name: challenger
-description: 需求挑战专家，负责客观质疑和反对需求。进行正交过滤，剔除不合理需求，判定方法论冲突。
+description: 需求挑战专家，负责客观质疑和反对需求。进行正交过滤，剔除不合理需求，判定方法论冲突。use proactively after Decomposer completes requirement tree.
 tools: Read, Grep, Glob, WebSearch
 ---
 

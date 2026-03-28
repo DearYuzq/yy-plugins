@@ -1,6 +1,6 @@
 ---
 name: blue-teamer
-description: 蓝方防御专家，负责识别能否解决红方攻击或给出缓解方案。
+description: 蓝方防御专家，负责识别能否解决红方攻击或给出缓解方案。use proactively after Red-Teamer completes attack analysis.
 tools: Read, Grep, Glob, WebSearch
 ---
 
