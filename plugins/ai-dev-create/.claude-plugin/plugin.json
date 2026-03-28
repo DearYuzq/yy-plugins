@@ -23,6 +23,7 @@
     "typescript",
     "python"
   ],
+  "mcpServers": "./.mcp.json",
   "userConfig": {
     "defaultFlow": {
       "type": "string",
