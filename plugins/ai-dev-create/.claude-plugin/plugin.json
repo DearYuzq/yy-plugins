@@ -23,7 +23,6 @@
     "typescript",
     "python"
   ],
-  "skills": "./skills/",
   "userConfig": {
     "defaultFlow": {
       "type": "string",
