@@ -92,7 +92,7 @@ allowed-tools: Read, Write, Grep, Glob
 
 ```
 Agent 工具参数：
-- subagent_type: "planner"
+- subagent_type: "ai-dev-create:planner"
 - description: "生成实现计划"
 - prompt: "基于以下规范生成实现计划：{规范内容或文件路径}"
 ```

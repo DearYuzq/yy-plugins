@@ -157,7 +157,7 @@ function addItem(list, item) {
 
 ```
 Agent 工具参数：
-- subagent_type: "tester"
+- subagent_type: "ai-dev-create:tester"
 - description: "编写测试用例"
 - prompt: "基于以下计划编写测试：{计划文档路径}"
 ```
@@ -166,7 +166,7 @@ Agent 工具参数：
 
 ```
 Agent 工具参数：
-- subagent_type: "implementer"
+- subagent_type: "ai-dev-create:implementer"
 - description: "实现生产代码"
 - prompt: "根据以下内容实现代码：
   计划：{计划文档路径}

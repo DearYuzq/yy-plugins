@@ -355,7 +355,7 @@ D) 其他
 
 ```
 Agent 工具参数：
-- subagent_type: "clarifier"
+- subagent_type: "ai-dev-create:clarifier"
 - description: "需求澄清"
 - prompt: "澄清以下需求，使用选项式问题：
   用户需求：{用户输入}
@@ -367,7 +367,7 @@ Agent 工具参数：
 
 ```
 Agent 工具参数：
-- subagent_type: "planner"
+- subagent_type: "ai-dev-create:planner"
 - description: "创建功能规范"
 - prompt: "基于以下内容创建功能规范：
   需求：{用户需求}

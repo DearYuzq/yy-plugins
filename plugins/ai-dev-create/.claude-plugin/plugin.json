@@ -1,6 +1,6 @@
 {
   "name": "ai-dev-create",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "description": "多阶段需求澄清 + SDD/TDD 开发插件，支持发散-收敛流程、多 Agent 协作和按需加载",
   "author": {
     "name": "yuzq",

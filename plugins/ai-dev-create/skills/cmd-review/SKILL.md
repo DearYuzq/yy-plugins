@@ -145,7 +145,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ```
 Agent 工具参数：
-- subagent_type: "reviewer"
+- subagent_type: "ai-dev-create:reviewer"
 - description: "代码审查"
 - prompt: "审查以下文件的代码质量、安全性和可维护性：
   文件：{文件路径或 'git diff 变更'}

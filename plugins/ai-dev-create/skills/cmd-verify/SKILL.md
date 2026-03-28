@@ -146,7 +146,7 @@ git diff --name-only
 
 ```
 Agent 工具参数：
-- subagent_type: "reviewer"
+- subagent_type: "ai-dev-create:reviewer"
 - description: "代码审查"
 - prompt: "审查以下代码变更的质量和安全性：
   变更文件：{文件列表}

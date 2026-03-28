@@ -622,7 +622,7 @@ POC-002: 并发验证 ✗ 失败 -> 新增需求 FR-018
 #### Phase 1: preprocessor
 ```
 Agent 工具参数：
-- subagent_type: "preprocessor"
+- subagent_type: "ai-dev-create:preprocessor"
 - description: "需求预处理"
 - prompt: "对以下需求进行预处理，检查完整性、一致性、可行性：
   用户需求：{用户输入}
@@ -632,7 +632,7 @@ Agent 工具参数：
 #### Phase 2: diverger
 ```
 Agent 工具参数：
-- subagent_type: "diverger"
+- subagent_type: "ai-dev-create:diverger"
 - description: "需求发散"
 - prompt: "基于预处理报告进行发散分析：
   预处理报告：.claude/clarifications/{feature}/01-preprocessor-report.md
@@ -642,7 +642,7 @@ Agent 工具参数：
 #### Phase 3: decomposer
 ```
 Agent 工具参数：
-- subagent_type: "decomposer"
+- subagent_type: "ai-dev-create:decomposer"
 - description: "需求拆解"
 - prompt: "将发散结果拆解为需求树：
   发散报告：.claude/clarifications/{feature}/02-diverger-report.md
@@ -652,7 +652,7 @@ Agent 工具参数：
 #### Phase 4: challenger
 ```
 Agent 工具参数：
-- subagent_type: "challenger"
+- subagent_type: "ai-dev-create:challenger"
 - description: "需求挑战"
 - prompt: "对需求树进行正交过滤和质疑：
   需求树：.claude/clarifications/{feature}/03-requirement-tree.md
@@ -675,7 +675,7 @@ AskUserQuestion 工具：
 #### Phase 5: completer
 ```
 Agent 工具参数：
-- subagent_type: "completer"
+- subagent_type: "ai-dev-create:completer"
 - description: "需求补全"
 - prompt: "补全需求的端到端完整性：
   需求树：.claude/clarifications/{feature}/03-requirement-tree.md
@@ -686,7 +686,7 @@ Agent 工具参数：
 #### Phase 6: explorer
 ```
 Agent 工具参数：
-- subagent_type: "explorer"
+- subagent_type: "ai-dev-create:explorer"
 - description: "技术探测"
 - prompt: "进行技术可行性验证：
   补全后需求：.claude/clarifications/{feature}/05-completer-report.md
@@ -697,7 +697,7 @@ Agent 工具参数：
 #### Phase 7: red-teamer
 ```
 Agent 工具参数：
-- subagent_type: "red-teamer"
+- subagent_type: "ai-dev-create:red-teamer"
 - description: "红方攻击"
 - prompt: "从攻击者视角发现安全漏洞：
   验证后需求：.claude/clarifications/{feature}/06-explorer-report.md
@@ -707,7 +707,7 @@ Agent 工具参数：
 #### Phase 8: blue-teamer
 ```
 Agent 工具参数：
-- subagent_type: "blue-teamer"
+- subagent_type: "ai-dev-create:blue-teamer"
 - description: "蓝方防御"
 - prompt: "评估漏洞可防御性并设计解决方案：
   攻击报告：.claude/clarifications/{feature}/07-red-team-report.md
