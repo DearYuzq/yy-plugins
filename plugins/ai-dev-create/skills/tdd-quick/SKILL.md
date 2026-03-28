@@ -60,32 +60,49 @@ $ARGUMENTS
 
 #### RED 阶段
 
-使用 tester agent 编写失败的测试：
+调用 Agent 工具编写失败的测试：
 
+**调用方式**：
 ```
-使用 tester agent 为以下功能编写测试：
-- 功能：$ARGUMENTS
-- 测试框架：根据项目自动检测
-- 覆盖率目标：80%
+Agent 工具参数：
+- subagent_type: "ai-dev-create:tester"
+- description: "编写测试用例"
+- prompt: |
+  为以下功能编写测试：
+  - 功能：$ARGUMENTS
+  - 测试框架：根据项目自动检测
+  - 覆盖率目标：80%
+
+  确保测试处于 RED 状态（测试应该失败）。
 ```
 
 运行测试确认失败。
 
 #### GREEN 阶段
 
-使用 implementer agent 实现最小代码使测试通过：
+调用 Agent 工具实现最小代码使测试通过：
 
+**调用方式**：
 ```
-使用 implementer agent 实现功能，使测试通过。
-遵循最小实现原则。
+Agent 工具参数：
+- subagent_type: "ai-dev-create:implementer"
+- description: "实现功能代码"
+- prompt: |
+  实现最小代码使测试通过。
+  遵循最小实现原则。
+  目标：使测试变为 GREEN 状态。
 ```
 
 #### REFACTOR 阶段
 
-使用 reviewer agent 检查代码质量：
+调用 Agent 工具检查代码质量：
 
+**调用方式**：
 ```
-使用 reviewer agent 审查最近变更的代码。
+Agent 工具参数：
+- subagent_type: "ai-dev-create:reviewer"
+- description: "代码审查"
+- prompt: "审查最近变更的代码，检查代码质量、安全性、可维护性"
 ```
 
 ### Step 4: 验证

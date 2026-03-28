@@ -28,7 +28,7 @@
     "defaultFlow": {
       "type": "string",
       "title": "默认开发流程",
-      "description": "默认开发流程: quick (TDD快速), standard (SDD标准), full (SDD完整)",
+      "description": "默认开发流程: quick (TDD快速), standard (SDD标准), full (SDD完整), simplified (简化澄清)",
       "default": "standard",
       "sensitive": false
     },
@@ -37,6 +37,13 @@
       "title": "自动保存会话",
       "description": "是否自动保存会话状态",
       "default": true,
+      "sensitive": false
+    },
+    "simplifyClarify": {
+      "type": "boolean",
+      "title": "简化澄清流程",
+      "description": "减少 Agent 调用次数，只使用 preprocessor + diverger，适合低质量模型",
+      "default": false,
       "sensitive": false
     }
   }

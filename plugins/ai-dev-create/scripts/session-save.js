@@ -35,12 +35,13 @@ function getSessionDir() {
 
 function getProjectDirs() {
   const cwd = process.cwd();
+  const claudeDir = path.join(cwd, '.claude');
   return {
-    clarifications: path.join(cwd, 'clarifications'),
-    specs: path.join(cwd, 'specs'),
-    plans: path.join(cwd, 'plans'),
-    tests: path.join(cwd, 'tests'),
-    reviews: path.join(cwd, 'reviews')
+    clarifications: path.join(claudeDir, 'clarifications'),
+    specs: path.join(claudeDir, 'specs'),
+    plans: path.join(claudeDir, 'plans'),
+    tests: path.join(claudeDir, 'tests'),
+    reviews: path.join(claudeDir, 'reviews')
   };
 }
 
