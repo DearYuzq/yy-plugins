@@ -24,9 +24,7 @@
     "python"
   ],
   "skills": "./skills/",
-  "agents": "./agents/",
   "hooks": "./hooks/hooks.json",
-  "mcpServers": "./.mcp.json",
   "userConfig": {
     "defaultFlow": {
       "type": "string",
