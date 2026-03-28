@@ -24,7 +24,6 @@
     "python"
   ],
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
   "userConfig": {
     "defaultFlow": {
       "type": "string",
