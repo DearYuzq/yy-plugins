@@ -3,6 +3,9 @@ name: tdd-quick
 description: 快速 TDD 流程入口。适用于简单功能、bug 修复、小型重构。跳过完整需求澄清，直接进入测试驱动开发循环。
 disable-model-invocation: true
 argument-hint: [功能描述或文件路径]
+context: fork
+agent: general-purpose
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ---
 
 # TDD Quick - 快速开发流程

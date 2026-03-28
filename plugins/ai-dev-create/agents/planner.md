@@ -1,7 +1,7 @@
 ---
 name: planner
 description: SDD 规划专家，负责创建功能规范和实现计划。当用户请求规划功能或创建规范时自动激活。
-tools: ["Read", "Grep", "Glob", "WebFetch", "Bash"]
+tools: Read, Grep, Glob, WebFetch, Bash
 ---
 
 # Planner Agent

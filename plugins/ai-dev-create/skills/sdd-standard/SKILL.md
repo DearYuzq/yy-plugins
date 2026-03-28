@@ -3,6 +3,9 @@ name: sdd-standard
 description: 标准 SDD 流程入口。适用于中等复杂度功能开发，包含规范、计划、测试、实现、审查、验证完整流程。
 disable-model-invocation: true
 argument-hint: [功能描述]
+context: fork
+agent: orchestrator
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ---
 
 # SDD Standard - 标准开发流程

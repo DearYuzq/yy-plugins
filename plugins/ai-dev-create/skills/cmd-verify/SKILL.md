@@ -1,6 +1,11 @@
 ---
 name: verify
 description: 运行验证循环，确保代码质量。
+disable-model-invocation: true
+argument-hint: [--quick] [--fix]
+context: fork
+agent: general-purpose
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ---
 
 # /ai-dev-create:verify - 运行验证循环

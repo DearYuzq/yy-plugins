@@ -1,7 +1,11 @@
 ---
 name: implementer
 description: 代码实现专家，负责根据规范和计划编写生产代码。当需要实现功能或修复 bug 时自动激活。
-tools: ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
+tools: Read, Write, Edit, Grep, Glob, Bash
+skills:
+  - ts-patterns
+  - python-patterns
+  - springboot-patterns
 ---
 
 # Implementer Agent

@@ -1,6 +1,11 @@
 ---
 name: plan
 description: 生成实现计划，将规范分解为可执行的步骤。
+disable-model-invocation: true
+argument-hint: [--spec path]
+context: fork
+agent: planner
+allowed-tools: Read, Write, Grep, Glob
 ---
 
 # /ai-dev-create:plan - 生成实现计划

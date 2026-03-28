@@ -3,6 +3,9 @@ name: sdd-full
 description: 完整 SDD 流程入口。适用于复杂项目，包含完整的 CLARIFY 发散-收敛流程、安全红蓝对抗验证。
 disable-model-invocation: true
 argument-hint: [功能描述]
+context: fork
+agent: orchestrator
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent, WebSearch
 ---
 
 # SDD Full - 完整开发流程

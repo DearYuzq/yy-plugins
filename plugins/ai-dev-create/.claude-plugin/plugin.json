@@ -1,12 +1,40 @@
 {
   "name": "ai-dev-create",
-  "version": "2.1.0",
-  "description": "多阶段需求澄清 + SDD/TDD 开发插件，支持发散→收敛流程、多 Agent 协作和按需加载",
+  "version": "2.2.0",
+  "description": "多阶段需求澄清 + SDD/TDD 开发插件，支持发散-收敛流程、多 Agent 协作和按需加载",
   "author": {
-    "name": "yuzq"
+    "name": "yuzq",
+    "url": "https://github.com/yuzq"
   },
+  "homepage": "https://github.com/yuzq/ai-dev-create#readme",
+  "repository": "https://github.com/yuzq/ai-dev-create",
   "license": "MIT",
+  "keywords": [
+    "sdd",
+    "tdd",
+    "multi-agent",
+    "orchestration",
+    "clarification",
+    "divergent",
+    "convergent",
+    "red-team",
+    "blue-team",
+    "springboot",
+    "typescript",
+    "python"
+  ],
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "hooks": "./hooks/hooks.json",
   "mcpServers": "./.mcp.json",
-  "keywords": ["sdd", "tdd", "multi-agent", "orchestration", "clarification", "divergent", "convergent", "red-team", "blue-team", "springboot", "typescript", "python"],
-  "repository": "https://github.com/yuzq/ai-dev-create"
+  "userConfig": {
+    "defaultFlow": {
+      "description": "默认开发流程: quick (TDD快速), standard (SDD标准), full (SDD完整)",
+      "sensitive": false
+    },
+    "autoSaveSession": {
+      "description": "是否自动保存会话状态",
+      "sensitive": false
+    }
+  }
 }

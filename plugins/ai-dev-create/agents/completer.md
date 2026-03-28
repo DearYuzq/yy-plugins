@@ -1,7 +1,7 @@
 ---
 name: completer
 description: 需求补全专家，负责端到端逻辑链条完整性检查，保证需求满足依赖关系。
-tools: ["Read", "Grep", "Glob"]
+tools: Read, Grep, Glob
 ---
 
 # Completer Agent

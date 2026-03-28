@@ -1,6 +1,11 @@
 ---
 name: impl
 description: 执行实现，编写生产代码。自动追踪实现进度并更新计划文档。
+disable-model-invocation: true
+argument-hint: [--tdd] [--file path] [--resume]
+context: fork
+agent: implementer
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ---
 
 # /ai-dev-create:impl - 执行实现

@@ -1,7 +1,7 @@
 ---
 name: red-teamer
 description: 红方攻击专家，负责发出各种边界问题攻击需求，找出弱点和漏洞。
-tools: ["Read", "Grep", "Glob"]
+tools: Read, Grep, Glob
 ---
 
 # Red-Teamer Agent

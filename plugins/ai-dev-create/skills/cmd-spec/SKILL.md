@@ -1,6 +1,11 @@
 ---
 name: spec
 description: 创建功能规范文档，启动 SDD 流程的第一步。
+disable-model-invocation: true
+argument-hint: [功能描述]
+context: fork
+agent: planner
+allowed-tools: Read, Write, Grep, Glob
 ---
 
 # /ai-dev-create:spec - 创建功能规范

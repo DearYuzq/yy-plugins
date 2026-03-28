@@ -1,6 +1,8 @@
 ---
 name: status
 description: 查看当前 SDD 流程状态，显示当前阶段、相关文件和下一步建议。
+disable-model-invocation: true
+argument-hint: [--reset] [--reset:docs] [--reset:session]
 ---
 
 # /ai-dev-create:status - 查看流程状态

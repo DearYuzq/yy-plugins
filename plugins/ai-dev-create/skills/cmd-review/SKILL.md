@@ -1,6 +1,11 @@
 ---
 name: review
 description: 代码审查，检查质量、安全性和可维护性。
+disable-model-invocation: true
+argument-hint: [path] [--full] [--security]
+context: fork
+agent: reviewer
+allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # /ai-dev-create:review - 代码审查

@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: 技术探测专家，负责生成验证代码进行技术调研。行不通的方案被丢弃，需求再次收敛。
-tools: ["Read", "Write", "Edit", "Bash", "WebSearch"]
+tools: Read, Write, Edit, Bash, WebSearch
 ---
 
 # Explorer Agent

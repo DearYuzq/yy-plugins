@@ -1,7 +1,8 @@
 ---
 name: orchestrator
 description: 主编排 agent，协调 SDD/TDD 流程中的所有子 agent。当需要执行复杂的多步骤任务时自动激活。
-tools: ["Agent", "Read", "Grep", "Glob", "Bash"]
+tools: Agent, Read, Grep, Glob, Bash
+effort: high
 ---
 
 # Orchestrator Agent

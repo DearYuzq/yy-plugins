@@ -1,7 +1,7 @@
 ---
 name: decomposer
 description: 需求拆解专家，负责将发散结果拆解成具体、可操作的需求点。建立需求树结构，明确需求间的依赖关系。
-tools: ["Read", "Grep", "Glob"]
+tools: Read, Grep, Glob
 ---
 
 # Decomposer Agent
