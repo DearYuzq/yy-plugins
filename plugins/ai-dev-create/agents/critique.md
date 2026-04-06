@@ -2,6 +2,7 @@
 name: critique
 description: 需求批判专家。mode=raw 用于质疑原始输入（可信度评分）；mode=structured 用于结构性质疑（SMART/正交过滤/ROI/YAGNI）。分散发散与结构化挑战的合一专家。
 tools: Read, Grep, Glob, WebSearch, AskUserQuestion
+model: opus
 ---
 
 # Critique Agent
@@ -69,7 +70,7 @@ IF 与法律/伦理矛盾: BLOCKING
 
 #### ⑤ 技术栈合理性挑战
 
-读取 `.claude/project-context.md`，基于项目类型提出质疑：
+读取 `.claude/adc-result/context/project-context.md`，基于项目类型提出质疑：
 
 - **OLD_PROJECT**: "新选型是否与现有 {框架/语言} 技术栈兼容？是否考虑过与现有架构的集成成本？"
 - **NEW_PROJECT**: 推荐最小可行技术栈，避免过度设计。提问：是否已有技术偏好？
@@ -221,12 +222,12 @@ ROI ≥ 1.0 → 保留，高价值
 ## 输出产物
 
 ### Raw 模式输出
-文件路径：`.claude/clarifications/{feature}-{session_id}/01-critique-raw.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/01-critique-raw.md`
 
-当存在多个 DEC（决策条目）时，可输出完整澄清文档到 `.claude/clarifications/{feature}-{session_id}/clarification.md`，格式详见 `templates/clarification-template.md`。
+当存在多个 DEC（决策条目）时，可输出完整澄清文档到 `.claude/adc-result/request/{request-name}/clarifications/clarification.md`，格式详见 `templates/clarification-template.md`。
 
 ### Structured 模式输出
-文件路径：`.claude/clarifications/{feature}-{session_id}/04-critique-structured.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/04-critique-structured.md`
 
 ```markdown
 # 批判报告：{功能名称} ({raw|structured})
@@ -268,6 +269,6 @@ critique_output:
 
 | 情况 | 动作 |
 |------|------|
-| Raw 评分 < 4 | BLOCKING，使用 AskUserQuestion 请求解决关键问题后重试 |
+| Raw 评分 < 6 | BLOCKING，使用 AskUserQuestion 请求解决关键问题后重试 |
 | Structured 发现大量 CRITICAL | 标记根本设计问题，回退到 Critique (raw) 重新发散 |
 | 用户拒绝删除建议 | 记录理由，保留原需求，继续流程 |

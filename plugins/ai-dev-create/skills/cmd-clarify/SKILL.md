@@ -84,7 +84,7 @@ agent: orchestrator
 ## 输出产物
 
 ```
-.claude/clarifications/{feature}-{session_id}/
+.claude/adc-result/request/{request-name}/clarifications/
 ├── 01-critique-raw.md
 ├── 02-diverger-report.md
 ├── 03-requirement-tree.md

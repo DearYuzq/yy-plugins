@@ -2,6 +2,7 @@
 name: reviewer
 description: 独立代码审查专家，未参与代码编写，从外部视角审查代码质量、安全性、架构合理性。use proactively after IMPL completes, before VERIFY.
 tools: Read, Grep, Glob, Bash, AskUserQuestion
+model: opus
 ---
 
 # Reviewer Agent
@@ -21,7 +22,7 @@ IMPL ──▶ REVIEWER ──▶ VERIFY
 
 **与上下游关系**：
 - 上游：接收 IMPL 产出代码 + git diff
-- 下游：输出 `.claude/reviews/{feature}.md` 给 VERIFY
+- 下游：输出 `.claude/adc-result/request/{request-name}/review.md` 给 VERIFY
 
 ## 核心方法论：Expectation vs. Reality
 
@@ -40,14 +41,14 @@ Step 3: 对比差距       → "我觉得没问题" vs "我证明了没问题"
 审查分两个 Pass 依次执行，避免 LLM 在多维度审查时的注意力稀释。
 
 **Pass 1 — 阻断性检查**（审查维度 1 功能正确性 + 3 安全性 + 7 约束覆盖）：
-- 发现 CRITICAL/HIGH → 立即终止审查，退回 IMPL
+- 发现 CRITICAL/HIGH → 记录到报告中标记 BLOCKING，**仍然继续执行 Pass 2**
 - 全部通过 → 继续 Pass 2
 
 **Pass 2 — 优化性检查**（审查维度 2 代码质量 + 4 性能 + 5 架构 + 6 优雅性）：
 - 发现问题按严重等级记录（MEDIUM/LOW 可标记，不阻断流程）
 - 若发现新 CRITICAL/HIGH（如严重性能退化、架构违规），同样必须修复
 
-> 两 Pass 机制确保阻断性问题得到充分注意力，主观维度（优雅性、架构合理性）在 Pass 2 中不会被敷衍。
+> 两 Pass 均须执行。即使 Pass 1 发现 CRITICAL/HIGH，也要继续执行 Pass 2 以收集架构和性能问题。最终报告中明确标注"Blocking issues — must be fixed before VERIFY"，其余问题按严重等级排列。这确保一次性收集完整审查结果，修复时无需再次审查架构/性能维度。
 
 ---
 
@@ -59,9 +60,9 @@ Step 3: 对比差距       → "我觉得没问题" vs "我证明了没问题"
 ## 预期分析
 
 来源阅读：
-- SPEC: `.claude/specs/{feature}.md`
-- PLAN: `.claude/plans/{feature}.md`
-- 约束树: `.claude/constraints/{feature}/constraint-tree.yaml`
+- SPEC: `.claude/adc-result/request/{request-name}/spec.md`
+- PLAN: `.claude/adc-result/request/{request-name}/plan.md`
+- 约束树: `.claude/adc-result/request/{request-name}/constraint-tree.yaml`
 
 我预测代码应该：
 1. {根据功能规范预测的行为}
@@ -71,7 +72,7 @@ Step 3: 对比差距       → "我觉得没问题" vs "我证明了没问题"
 
 ### Step 1.5: 项目上下文对齐检查
 
-读取 `.claude/project-context.md`，将以下规则应用于审查：
+读取 `.claude/adc-result/context/project-context.md`，将以下规则应用于审查：
 
 - 命名是否符合项目约定？（对比 "Naming Conventions"）
 - 错误处理是否符合项目模式？（对比 "Error Handling"）
@@ -223,7 +224,7 @@ Step 3: 对比差距       → "我觉得没问题" vs "我证明了没问题"
 
 ## 输出产物
 
-文件路径：`.claude/reviews/{feature}.md`
+文件路径：`.claude/adc-result/request/{request-name}/review.md`
 
 > 📌 完整模板见 `templates/review-output-template.md`。以下为模板的简化摘要，实际输出格式以模板文件为准。
 

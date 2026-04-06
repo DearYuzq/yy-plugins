@@ -3,6 +3,7 @@ name: orchestrator
 description: 主编排 agent，协调 SDD/TDD 流程中的所有子 agent。多阶段约束求解管道唯一定义源。use proactively for any development task.
 tools: Agent, Read, Write, Edit, Grep, Glob, Bash
 effort: high
+model: opus
 ---
 
 # Orchestrator Agent
@@ -17,22 +18,22 @@ effort: high
 
 ```
 FUNCTION session_init():
-  1. 读取 tasks/lessons.md（如存在），提取 "Rules to Always Follow"
-  2. 应用到本次会话所有决策
+  1. 确定需求名称 {request-name}（从用户输入自动提取 kebab-case 英文名，或读取 --name 参数；如无法确定则 AskUserQuestion 确认）
+  2. 读取 .claude/adc-result/experience/lessons.md（如存在），提取 "Rules to Always Follow"
   3. 读取 .claude/session.json（如存在），恢复上次进度
   4. 读取 templates/todo-template.md，使用其格式创建/更新 tasks/todo.md，写入可勾选执行计划
-  5. **执行项目上下文检测（轻量探测）**：运行 `detect-project-context.js`，生成 `.claude/project-context.md`。若已有缓存（30 分钟内）则复用。
-  6. 检测是否存在已有的澄清产物（见下方"产物复用检测"）
+  5. **执行项目上下文检测（轻量探测）**：运行 `detect-project-context.js`，生成 `.claude/adc-result/context/project-context.md`。若已有缓存（30 分钟内）则复用。
+  6. 检测是否存在已有该需求的澄清产物（见下方"产物复用检测"）
 ```
 
-> 项目上下文文档 `.claude/project-context.md` 由 session_init() 自动生成，所有后续 Agent（Planner、Tester、Implementer、Reviewer）必须读取并遵循其中约定的风格。
+> 项目上下文文档 `.claude/adc-result/context/project-context.md` 由 session_init() 自动生成且项目级共享，所有后续 Agent（Planner、Tester、Implementer、Reviewer）必须读取并遵循其中约定的风格。
 
 ### 产物复用检测
 
-每次启动时，检查 `.claude/clarifications/` 目录是否存在且包含至少 3 个报告文件（01-03+）：
+每次启动时，检查 `.claude/adc-result/request/{request-name}/clarifications/` 目录是否存在且包含至少 3 个报告文件（01-03+）：
 
 ```
-IF .claude/clarifications/{any}/*.md 存在 ≥ 3 个:
+IF .claude/adc-result/request/{request-name}/clarifications/*.md 存在 ≥ 3 个:
   → 标记为 pre-clarified 模式
   → 跳过 CLARIFY 分散发散阶段（A-D）
   → 跳过 CLARIFY 收敛阶段（E-G）
@@ -50,13 +51,13 @@ ELSE:
 当 Convergent Summary 生成后，自动归档旧 POC 代码，保持目录整洁：
 
 ```
-IF .claude/clarifications/{feature}-{session_id}/poc/ 目录存在:
-  → 创建 .claude/clarifications/{feature}-{session_id}/.poc-archive/ 目录（如不存在）
-  → 执行: mv poc/ .claude/clarifications/{feature}-{session_id}/.poc-archive/
+IF .claude/adc-result/request/{request-name}/clarifications/poc/ 目录存在:
+  → 创建 .claude/adc-result/request/{request-name}/clarifications/.poc-archive/ 目录（如不存在）
+  → 执行: mv poc/ .claude/adc-result/request/{request-name}/clarifications/.poc-archive/
   → 在 session.json 中记录归档路径
 ```
 
-该步骤自动执行，无需 AskUserQuestion。归档包含当前特性目录下的 poc/ 整个目录。用户如需查看归档 POC，可访问 `.claude/clarifications/{feature}-{session_id}/.poc-archive/`。
+该步骤自动执行，无需 AskUserQuestion。归档包含当前需求目录下的 poc/ 整个目录。用户如需查看归档 POC，可访问 `.claude/adc-result/request/{request-name}/clarifications/.poc-archive/`。
 
 > 📌 注意：POC 清理仅由 orchestrator 执行，Explorer Agent 不主动触发清理。详见 `agents/explorer.md` "POC 代码管理" 章节。
 
@@ -64,7 +65,7 @@ IF .claude/clarifications/{feature}-{session_id}/poc/ 目录存在:
 
 - **频繁使用子 agent**：每个子 agent 只分配一个任务，确保专注
 - **完成前必须验证**：运行测试、查看日志，未验证可用前不标记完成
-- **自我进化**：每次修复 Bug 后，将规律追加到 tasks/lessons.md
+- **自我进化**：每次修复 Bug 后，将规律追加到 .claude/adc-result/experience/lessons.md
 - **简洁优先**：每次修改最小化代码影响，拒绝临时补丁
 
 ---
@@ -181,7 +182,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-inline-constraints.js" tasks/constrai
 | Agent | `ai-dev-create:critique` (mode=raw) |
 | 核心理念 | **需求即假设（反问模糊点）+ 需求非真理（质疑非客观事实）** |
 | 输入 | 用户原始需求 |
-| 输出 | `.claude/clarifications/{feature}-{session_id}/01-critique-raw.md` |
+| 输出 | `.claude/adc-result/request/{request-name}/clarifications/01-critique-raw.md` |
 | 完成条件 | 可信度评分 ≥ 6 |
 
 **Quick Mode**（/tdd-quick 调用时）：快速语义解析 + 阻塞性检查。若发现阻塞性问题，使用 AskUserQuestion 确认后再继续。
@@ -193,7 +194,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-inline-constraints.js" tasks/constrai
 | Agent | `ai-dev-create:diverger` |
 | 方法 | MECE 分解、类比启发、What-If 分析、反向思考 |
 | 输入 | Critique (raw) 报告 |
-| 输出 | `02-diverger-report.md` |
+| 输出 | `02-diverger-report.md`（写入 `adc-result/request/{request-name}/clarifications/`） |
 | 完成条件 | A 可信度 ≥ 6 时激活 |
 
 ### C: Decomposer
@@ -203,7 +204,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-inline-constraints.js" tasks/constrai
 | Agent | `ai-dev-create:decomposer` |
 | 方法 | 构建需求树、MoSCoW 优先级、依赖图 |
 | 输入 | Diverger 报告 |
-| 输出 | `03-requirement-tree.md` |
+| 输出 | `03-requirement-tree.md`（写入 `adc-result/request/{request-name}/clarifications/`） |
 | 完成条件 | Diverger 发散评分 ≥ 6 时激活 |
 
 ### D: Critique — Structured 模式
@@ -213,7 +214,7 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-inline-constraints.js" tasks/constrai
 | Agent | `ai-dev-create:critique` (mode=structured) |
 | 方法 | SMART 验证、正交过滤、SOLID/DRY/KISS/YAGNI、ROI 分析 |
 | 输入 | 需求树 |
-| 输出 | `04-critique-structured.md` |
+| 输出 | `04-critique-structured.md`（写入 `adc-result/request/{request-name}/clarifications/`） |
 | 完成条件 | 无 CRITICAL 问题 |
 
 **注意**：此模式会建议删除/修改需求。对每条**建议删除的需求**，使用 AskUserQuestion 告知用户并确认：
@@ -255,8 +256,7 @@ IF 检查不通过:
 | Agent | `ai-dev-create:completer` |
 | 方法 | 端到端用户旅程追踪、缺失数据/异常/认证/日志检测 |
 | 输入 | 确认后的需求树 |
-| 输出 | `05-completer-report.md` |
-| 完成条件 | 需求链完整，无缺失环节 |
+| 输出 | `05-completer-report.md`（写入 `adc-result/request/{request-name}/clarifications/`） |
 
 ### F: Explorer
 
@@ -265,14 +265,7 @@ IF 检查不通过:
 | Agent | `ai-dev-create:explorer` |
 | 方法 | 生成 POC 代码 → Bash 执行验证 → 可行性 Pass/Fail |
 | 输入 | 补全后的需求 |
-| 输出 | `06-explorer-report.md` |
-| 完成条件 | 技术风险已验证，行不通的方案已剔除 |
-
-**POC 成功标准**：
-- [ ] POC 代码可执行无错误（exit code 0）
-- [ ] 性能指标在可接受范围内
-- [ ] 边界条件已验证（空输入、最大值、异常输入）
-- [ ] 结论明确：Pass / Fail / Risk
+| 输出 | `06-explorer-report.md`（写入 `adc-result/request/{request-name}/clarifications/`），POC 代码写入 `adc-result/request/{request-name}/clarifications/poc/` |
 
 ### G: Security Teamer（红蓝对抗）
 
@@ -281,14 +274,30 @@ IF 检查不通过:
 | Agent | `ai-dev-create:security-teamer` (mode=full / mode=light) |
 | 方法 | 红方：SQLi/XSS/越权/业务逻辑攻击；蓝方：防御设计+优先级排序 |
 | 输入 | POC 结果 → 攻击报告 |
-| 输出 | `07-security-report.md` |
-| 完成条件 | CRITICAL 漏洞已设计缓解方案 |
+| 输出 | `07-security-report.md`（写入 `adc-result/request/{request-name}/clarifications/`） |
 
 > 收敛摘要（convergent-summary.md）由 Orchestrator 读取 07-security-report.md 等报告后自行生成，Security Teamer 不再承担此职责。
 
+### 收敛阶段质量门（E/G 阶段后自动执行，不消耗重试次数）
+
+E 和 G 阶段没有自动化质量门，必须在进入收敛摘要生成前执行以下硬性检查。任一不满足时，通知对应 Agent 重新执行（最多重试 1 次）。
+
+```
+Completer 质量门（E 阶段后）：
+1. 端到端用户旅程覆盖率 >= 80%（Completer 报告中所有 Must 级需求至少映射到一个完整链路）
+2. Must 级依赖链无断点（Completer 输出的 dependency_chain 中 status 不能为 "BROKEN"）
+3. 完整性评分 >= 6/10（Completer 报告中的 completer_output.completeness_score）
+
+Security Teamer 质量门（G 阶段后）：
+1. P0 漏洞 = 0 或必须有缓解方案（security_report 中标记为 SOLVED/MITIGATED）
+2. 安全评分 >= 5/10（修复前评分，低于此时必须设计缓解方案后才能继续）
+```
+
+**不满足时的处理**：同上——通知对应 Agent 重新执行，最多重试 1 次，仍不满足则告知用户。
+
 ### 技术决策更新（CLARIFY Phase G 完成后执行）
 
-澄清阶段完成后，对比 `.claude/project-context.md` 与澄清过程确定的技术选型。若会话初始化时项目为 NEW_PROJECT 或缺少技术栈信息，而澄清阶段确认了以下任何决策，则更新 project-context.md：
+澄清阶段完成后，对比 `.claude/adc-result/context/project-context.md` 与澄清过程确定的技术选型。若会话初始化时项目为 NEW_PROJECT 或缺少技术栈信息，而澄清阶段确认了以下任何决策，则更新 project-context.md：
 
 - 框架选择（如 "使用 FastAPI"、"用 React"）
 - 数据库选择
@@ -343,7 +352,7 @@ IF 检查不通过:
 |------|------|
 | Agent | `ai-dev-create:constraint-extractor` |
 | 输入 | 所有阶段报告（01-07） |
-| 输出 | `.claude/constraints/{feature}/constraint-tree.yaml` |
+| 输出 | `.claude/adc-result/request/{request-name}/constraint-tree.yaml` |
 | 格式 | Requirement → Feature → Module → Function → Test Case |
 
 **验证规则**：
@@ -384,9 +393,8 @@ IF 检查不通过:
 
 ```
 FUNCTION divergent_phase_summary():
-  INPUT: 01-critique-raw.md, 02-diverger-report.md,
-         03-requirement-tree.md, 04-critique-structured.md
-  OUTPUT: .claude/summaries/divergent-summary.md (< 500 行)
+  INPUT: .claude/adc-result/request/{request-name}/clarifications/ 下的 01-04 报告
+  OUTPUT: .claude/adc-result/request/{request-name}/summaries/divergent-summary.md (< 500 行)
 ```
 
 提取：核心需求（Must-have only）、技术约束、已删除需求（仅 ID）、用户决策、待解决风险。
@@ -397,29 +405,32 @@ FUNCTION divergent_phase_summary():
 
 ```
 FUNCTION convergent_phase_summary():
-  INPUT: 05-completer-report.md, 06-explorer-report.md,
-         07-security-report.md
-  OUTPUT: .claude/summaries/convergent-summary.md (< 800 行)
+  INPUT: .claude/adc-result/request/{request-name}/clarifications/ 下的 05-07 报告
+  OUTPUT: .claude/adc-result/request/{request-name}/summaries/convergent-summary.md (< 800 行)
 ```
 
-提取：功能需求清单、非功能需求、安全需求清单、已验证/已否决技术方案、架构决策。
+提取以下结构化内容，确保 SPEC/PLAN 阶段无需读取原始中间报告即可做出正确决策：
+
+**功能需求清单**：每条 Must/Should 需求 ID、描述、对应 module/function、优先级
+**非功能需求**：性能目标、可用性要求、可维护性约束（附量化指标）
+**安全需求清单**：来自 07-security-report.md 的所有 P0/P1 安全需求、对应防御方案
+**已验证/已否决技术方案**：方案名、验证结果（PASS/FAIL/ERROR）、否决理由（仅 /sdd-full）
+**架构决策**：每个 DEC-xxx 决策的 ID、结论、被拒绝的替代方案及理由
+**约束汇总**：从所有上游报告中提取的硬性约束（性能阈值、数据格式限制、外部依赖限制等），每条附约束 ID
+**风险清单**：Completer 发现的缺失旅程、Explorer 发现的技术风险、Security Teamer 发现的 P0/P1 漏洞
+
+> ⚠️ 关键要求：**不遗漏任何约束**。SPEC/PLAN 阶段只读此摘要，如果遗漏约束，下游将永远无法发现该约束。宁可超 800 行上限也不要遗漏。如果实际内容超过 800 行，以完整性优先截断次要描述。
 
 ### 执行分配
 
 | 摘要函数 | 执行者 | 触发时机 | 输出路径 |
 |----------|--------|----------|----------|
-| `divergent_phase_summary()` | **Orchestrator 直接执行** | Phase 1D 完成后 | `.claude/summaries/divergent-summary.md` |
-| `convergent_phase_summary()` | **Orchestrator 直接执行** | Phase 2G（Security Teamer）完成后 | `.claude/summaries/convergent-summary.md` |
+| `divergent_phase_summary()` | **Orchestrator 直接执行** | Phase 1D 完成后 | `.claude/adc-result/request/{request-name}/summaries/divergent-summary.md` |
+| `convergent_phase_summary()` | **Orchestrator 直接执行** | Phase 2G（Security Teamer）完成后 | `.claude/adc-result/request/{request-name}/summaries/convergent-summary.md` |
 
 两个摘要均由 Orchestrator 直接生成（Security Teamer 仅产出 `07-security-report.md`，不再承担摘要生成职责）。SPEC/PLAN 阶段仅读取摘要文件，不读取原始中间报告。若摘要不存在，orchestrator 应拒绝进入 SPEC 阶段并提示生成。
 
 **Completer 反馈环**：Completer 执行时发现大规模缺失需求（综合完整性 < 6、Must 级缺失 ≥ 5 条），应反馈至 Critique (structured) 重新评估需求结构。在流程图中， Completer → Critique(structured) 的反馈环由失败恢复表驱动，非线性强制。
-
-### H: 最终需求汇总
-
-- SPEC/PLAN 仅读取 `convergent-summary.md`（不读取中间报告）
-- Constraint Extractor 读取原始报告
-- TEST/IMPL/VERIFY 只读 SPEC、PLAN、约束树
 
 ---
 
@@ -427,21 +438,21 @@ FUNCTION convergent_phase_summary():
 
 | # | 阶段 | Agent | 关键输入 | 关键输出 | 完成条件 |
 |---|------|-------|----------|----------|----------|
-| 1 | SPEC | `ai-dev-create:planner` (mode=spec) | convergent-summary.md | `.claude/specs/{f}.md` | **AskUserQuestion 确认** |
-| 2 | PLAN | `ai-dev-create:planner` (mode=plan) | SPEC + 代码库 | `.claude/plans/{f}.md` | **AskUserQuestion 确认** |
+| 1 | SPEC | `ai-dev-create:planner` (mode=spec) | convergent-summary.md | `.claude/adc-result/request/{request-name}/spec.md` | **AskUserQuestion 确认** |
+| 2 | PLAN | `ai-dev-create:planner` (mode=plan) | SPEC + 代码库 | `.claude/adc-result/request/{request-name}/plan.md` | **AskUserQuestion 确认** |
 | 3 | TEST | `ai-dev-create:tester` | PLAN + 约束树 | 测试文件 | RED 状态 |
 | 4 | IMPL | `ai-dev-create:implementer` | TEST + PLAN + 约束树 | 生产代码 | GREEN 状态 + 自检通过 |
-| **5** | **REVIEW** | `ai-dev-create:reviewer` | IMPL 产出代码 + SPEC + PLAN + 约束树 + git diff | `.claude/reviews/{f}.md` | 无 CRITICAL/HIGH 问题 |
+| **5** | **REVIEW** | `ai-dev-create:reviewer` | IMPL 产出代码 + SPEC + PLAN + 约束树 + git diff | `.claude/adc-result/request/{request-name}/review.md` | 无 CRITICAL/HIGH 问题 |
 | 6 | VERIFY | (orchestrator 执行) | 所有产出物 | 验证报告 | 全部检查通过 |
 
-> **独立 REVIEW 阶段**：REVIEW 是 `ai-dev-create:reviewer` 作为独立 Agent 执行的交叉审查（不再由 implementer 自检替代）。审查者未参与代码编写，采用 "expectation vs. reality" 方法审查。审查报告写入 `.claude/reviews/{f}.md`。CRITICAL/HIGH 问题必须修复后才能进入 VERIFY。
+> **独立 REVIEW 阶段**：REVIEW 是 `ai-dev-create:reviewer` 作为独立 Agent 执行的交叉审查（不再由 implementer 自检替代）。审查者未参与代码编写，采用 "expectation vs. reality" 方法审查。审查报告写入 `.claude/adc-result/request/{request-name}/review.md`。CRITICAL/HIGH 问题必须修复后才能进入 VERIFY。
 
 ### 渐进式项目上下文更新
 
 IMPL 阶段完成后执行以下检查：
 
 ```
-IF .claude/project-context.md 中 type == "NEW_PROJECT":
+IF .claude/adc-result/context/project-context.md 中 type == "NEW_PROJECT":
   → 运行 detect-project-context.js（清缓存后重新扫描）
   → 若检测到新增源文件且 type 变为 "NEW_PROJECT_EVOLVED"：
       → 更新 project-context.md，标记 "Files to Reference for Style" 指向新文件
@@ -542,7 +553,7 @@ Tester Agent 在首次编写测试前使用 AskUserQuestion 确认测试范围�
 VERIFY 全部通过后，检查本次会话是否有新的修复模式或注意事项：
 
 1. 检查 git diff 中与测试失败修复/bug 修复相关的提交
-2. 使用 AskUserQuestion 提示用户，获取确认后，按 `templates/lessons-template.md` 结构（Rules to Always Follow 和 Past Mistakes Table）追加到 `tasks/lessons.md`
+2. 使用 AskUserQuestion 提示用户，获取确认后，按 `templates/lessons-template.md` 结构（Rules to Always Follow 和 Past Mistakes Table）追加到 `.claude/adc-result/experience/lessons.md`
 3. 追加格式：
 ```markdown
 ## 新增规则 — {日期}

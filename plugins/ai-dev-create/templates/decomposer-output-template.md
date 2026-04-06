@@ -1,13 +1,13 @@
 # Decomposer 输出模板
 
 ## 文件路径
-`.claude/clarifications/{feature}-{session_id}/03-requirement-tree.md`
+`.claude/adc-result/request/{request-name}/clarifications/03-requirement-tree.md`
 
 ## 模板内容
 
 ### 需求树文档
 
-文件路径：`.claude/clarifications/{feature}-{session_id}/03-requirement-tree.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/03-requirement-tree.md`
 
 ```markdown
 # 需求树：{功能名称}

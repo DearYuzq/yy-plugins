@@ -17,7 +17,7 @@ allowed-tools: Read, Write, Grep, Glob
 ```bash
 /ai-dev-create:spec                              # 基于收敛摘要生成
 /ai-dev-create:spec "功能描述"                    # 直接指定功能规范
-/ai-dev-create:spec --from .claude/summaries/convergent-summary.md # 基于现有文档
+/ai-dev-create:spec --from .claude/adc-result/request/{request-name}/summaries/convergent-summary.md # 基于现有文档
 ```
 
 ## 输出
@@ -93,11 +93,11 @@ Agent 工具参数：
 ### 上下文传递
 
 **接收上一阶段的上下文**：
-- 收敛摘要路径：`.claude/summaries/convergent-summary.md`
-- 澄清文档路径（如有）：`.claude/clarifications/{feature}/`
+- 收敛摘要路径：`.claude/adc-result/request/{request-name}/summaries/convergent-summary.md`
+- 澄清文档路径（如有）：`.claude/adc-result/request/{request-name}/clarifications/`
 
 **传递给下一阶段的上下文**：
-- 规范文档路径：`.claude/specs/{feature}.md`
+- 规范文档路径：`.claude/adc-result/request/{request-name}/spec.md`
 - 功能列表、验收清单
 
 ### 执行流程
@@ -105,5 +105,5 @@ Agent 工具参数：
 1. 读取收敛摘要或澄清结果
 2. 使用 Agent 工具调用 planner agent (mode=spec)
 3. 等待 agent 返回规范
-4. 保存规范到 `.claude/specs/{feature}.md`
+4. 保存规范到 `.claude/adc-result/request/{request-name}/spec.md`
 5. 显示规范摘要，请求用户确认

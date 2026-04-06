@@ -27,7 +27,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 
 `/ai-dev-create:impl` 命令会自动追踪实现进度：
 
-1. **读取计划**：开始时读取 `.claude/plans/{feature}.md`
+1. **读取计划**：开始时读取 `.claude/adc-result/request/{request-name}/plan.md`
 2. **检查进度**：从 🔄 进行中 或下一个 ⏳ 待开始 步骤继续
 3. **更新状态**：每完成一步更新计划文档
 4. **记录偏差**：实际实现与计划不同时记录
@@ -46,7 +46,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 
 ```bash
 # 查看计划文档中的进度概览
-cat .claude/plans/{feature}.md | grep -A 10 "进度概览"
+cat .claude/adc-result/request/{request-name}/plan.md | grep -A 10 "进度概览"
 
 # 或直接打开计划文档
 # 查看 "📊 进度概览" 部分
@@ -179,8 +179,8 @@ Agent 工具参数：
 ### 上下文传递
 
 **接收上一阶段的上下文**：
-- 计划文档路径：`.claude/plans/{feature}.md`
-- 规范文档路径：`.claude/specs/{feature}.md`
+- 计划文档路径：`.claude/adc-result/request/{request-name}/plan.md`
+- 规范文档路径：`.claude/adc-result/request/{request-name}/spec.md`
 
 **传递给下一阶段的上下文**：
 - 变更的文件列表

@@ -18,14 +18,14 @@ context: fork
 
 ## 执行流程
 
-1. 读取 `.claude/clarifications/` 下的澄清报告
+1. 读取 `.claude/adc-result/request/{request-name}/clarifications/` 下的澄清报告
 2. 如果存在 `constraint-tree.yaml`，读取并对比
 3. 调用 `constraint-extractor` agent 执行约束提取
-4. 输出到 `.claude/constraints/{feature}/constraint-tree.yaml`
+4. 输出到 `.claude/adc-result/request/{request-name}/constraint-tree.yaml`
 
 ## 输出产物
 
-- `.claude/constraints/{feature}/constraint-tree.yaml` — 完整约束树
+- `.claude/adc-result/request/{request-name}/constraint-tree.yaml` — 完整约束树
 
 ## 下游引用
 

@@ -2,6 +2,7 @@
 name: tester
 description: TDD 测试专家，负责编写和运行测试。当需要编写测试或运行测试验证时自动激活。use proactively when tests need to be written or run.
 tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
+model: sonnet
 ---
 
 # Tester Agent
@@ -11,17 +12,17 @@ tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 ## 输入上下文
 
 来自 PLAN 阶段：
-- 实现计划文档（`.claude/plans/{feature}.md`）
+- 实现计划文档（`.claude/adc-result/request/{request-name}/plan.md`）
 - 测试策略定义
 - 文件变更清单
 
 来自 SPEC 阶段：
-- 功能规范文档（`.claude/specs/{feature}.md`）
+- 功能规范文档（`.claude/adc-result/request/{request-name}/spec.md`）
 - 验收标准列表
 - 边界情况定义
 
 来自约束提取阶段：
-- 约束树文档（`.claude/constraints/{feature}/constraint-tree.yaml`）
+- 约束树文档（`.claude/adc-result/request/{request-name}/constraint-tree.yaml`）
 - 函数签名定义与测试用例映射（用于指导测试用例编写）
 
 来自 IMPL 阶段（重试时）：
@@ -38,7 +39,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 
 ## Step 0: 项目上下文与测试框架检测
 
-首先读取 `.claude/project-context.md`。若其中已有测试框架检测结论（`## Test Framework` 章节），直接使用该结论。若没有或项目为 NEW_PROJECT，再执行以下检测：
+首先读取 `.claude/adc-result/context/project-context.md`。若其中已有测试框架检测结论（`## Test Framework` 章节），直接使用该结论。若没有或项目为 NEW_PROJECT，再执行以下检测：
 
 | 语言 | 检测方式 | 测试框架 |
 |------|----------|----------|

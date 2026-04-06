@@ -13,4 +13,4 @@
 <!-- 完成后填写 -->
 - **What went well**: 
 - **What to improve**: 
-- **Lessons learned**: (更新到 tasks/lessons.md)
+- **Lessons learned**: (更新到 .claude/adc-result/experience/lessons.md)

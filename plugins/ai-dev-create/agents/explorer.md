@@ -2,6 +2,7 @@
 name: explorer
 description: 技术探测专家，负责生成验证代码进行技术调研。行不通的方案被丢弃，需求再次收敛。use proactively after Completer completes requirement chain validation.
 tools: Read, Write, Edit, Bash, WebSearch, AskUserQuestion
+model: sonnet
 ---
 
 # Explorer Agent
@@ -100,7 +101,7 @@ POC 代码的约束取决于所选 Profile，**违反约束的 POC 视为无效*
 
 **失败处理**：{验证失败后怎么办}
 
-**代码位置**：`.claude/clarifications/{feature}-{session_id}/poc/{poc-id}.js`
+**代码位置**：`.claude/adc-result/request/{request-name}/clarifications/poc/{poc-id}.js`
 
 **预计时间**：{time}
 ```
@@ -250,7 +251,7 @@ verify_{poc_id}();
 - 考虑添加缓存
 - 或修改需求指标
 
-**代码位置**：`.claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance.js`
+**代码位置**：`.claude/adc-result/request/{request-name}/clarifications/poc/poc-001-query-performance.js`
 
 ---
 
@@ -276,7 +277,7 @@ verify_{poc_id}();
 - 引入分布式锁
 - 或降低并发预期
 
-**代码位置**：`.claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js`
+**代码位置**：`.claude/adc-result/request/{request-name}/clarifications/poc/poc-002-concurrency.js`
 ```
 
 ### Step 4: 代码生成（自动执行）
@@ -290,8 +291,8 @@ verify_{poc_id}();
 
 | POC-ID | 文件路径 | 状态 |
 |--------|----------|------|
-| POC-001 | `.claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance.js` | 已生成 |
-| POC-002 | `.claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js` | 已生成 |
+| POC-001 | `.claude/adc-result/request/{request-name}/clarifications/poc/poc-001-query-performance.js` | 已生成 |
+| POC-002 | `.claude/adc-result/request/{request-name}/clarifications/poc/poc-002-concurrency.js` | 已生成 |
 ```
 
 ### Step 5: POC 执行（自动执行）
@@ -305,7 +306,7 @@ verify_{poc_id}();
 
 **执行命令**：
 ```bash
-node .claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance.js
+node .claude/adc-result/request/{request-name}/clarifications/poc/poc-001-query-performance.js
 ```
 
 **执行结果**：
@@ -326,7 +327,7 @@ node .claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance
 
 **执行命令**：
 ```bash
-node .claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js
+node .claude/adc-result/request/{request-name}/clarifications/poc/poc-002-concurrency.js
 ```
 
 **执行结果**：
@@ -375,7 +376,7 @@ node .claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js
 
 ### 探测报告
 
-文件路径：`.claude/clarifications/{feature}-{session_id}/06-explorer-report.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/06-explorer-report.md`
 
 ```markdown
 # 探测报告：{功能名称}
@@ -519,8 +520,8 @@ node .claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js
 
 | 文件 | 描述 | 状态 |
 |------|------|------|
-| `.claude/clarifications/{feature}-{session_id}/poc/poc-001.js` | 查询性能验证 | 已执行 |
-| `.claude/clarifications/{feature}-{session_id}/poc/poc-002.js` | 并发安全验证 | 已执行 |
+| `.claude/adc-result/request/{request-name}/clarifications/poc/poc-001.js` | 查询性能验证 | 已执行 |
+| `.claude/adc-result/request/{request-name}/clarifications/poc/poc-002.js` | 并发安全验证 | 已执行 |
 
 ---
 
@@ -558,7 +559,7 @@ explorer_output:
   new_requirements: [{list}]
   poc_results: [{list}]
   feasibility_score: {score}
-  poc_directory: ".claude/clarifications/{feature}-{session_id}/poc/"
+  poc_directory: ".claude/adc-result/request/{request-name}/clarifications/poc/"
 ```
 ```
 
@@ -587,7 +588,7 @@ Security Teamer
 ## POC 代码目录结构
 
 ```
-.claude/clarifications/{feature}-{session_id}/
+.claude/adc-result/request/{request-name}/clarifications/
 ├── poc/
 │   ├── poc-001-query-performance.js
 │   ├── poc-002-concurrency.js
@@ -624,12 +625,12 @@ POC 验证完成后，根据置信度级别决定后续动作：
 ## POC 代码管理
 
 **生成规则**:
-- POC 代码输出到 `.claude/clarifications/{feature}-{session_id}/poc/`
+- POC 代码输出到 `.claude/adc-result/request/{request-name}/clarifications/poc/`
 - 每个 POC 文件命名: `poc-{risk-id}-{language}.{ext}`
 
 **清理策略**:
 - POC 代码的归档由 orchestrator 统一管理。
-- 当 Convergent Summary 生成后，orchestrator 自动将 `poc/` 归档到 `.claude/clarifications/{feature}-{session_id}/.poc-archive/`。
+- 当 Convergent Summary 生成后，orchestrator 自动将 `poc/` 归档到 `.claude/adc-result/request/{request-name}/clarifications/.poc-archive/`。
 - 详见 `agents/orchestrator.md` "POC 代码自动归档" 章节。
 - Explorer Agent 不主动触发 POC 清理操作。
 

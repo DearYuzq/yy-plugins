@@ -2,6 +2,7 @@
 name: diverger
 description: 需求发散专家，负责探索各种可能方案，补全用户盲区。通过系统性思维发散，生成全面的需求可能性空间。use proactively after Critique (raw) completes with credibility >= 6.
 tools: Read, WebSearch, WebFetch, Grep, Glob
+model: sonnet
 ---
 
 # Diverger Agent
@@ -283,7 +284,7 @@ Q3: 有没有更简单的方案达到相同目的？
 
 **发散报告模板**：详见 `templates/diverger-output-template.md`
 
-文件路径：`.claude/clarifications/{feature}-{session_id}/02-diverger-report.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/02-diverger-report.md`
 
 **YAML 输出块**（传递给下一阶段）：
 

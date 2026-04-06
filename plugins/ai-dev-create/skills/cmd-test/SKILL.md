@@ -16,7 +16,7 @@ allowed-tools: Read, Write, Grep, Glob, Bash
 
 ```bash
 /ai-dev-create:test                              # 基于当前计划和约束生成
-/ai-dev-create:test --plan .claude/plans/xxx.md  # 基于指定计划
+/ai-dev-create:test --plan .claude/adc-result/request/{request-name}/plan.md  # 基于指定计划
 /ai-dev-create:test --coverage 90                # 设置覆盖率目标（默认 80）
 ```
 
@@ -97,9 +97,9 @@ Agent 工具参数：
 ### 上下文传递
 
 **接收的上下文**：
-- 计划文档：`.claude/plans/{feature}.md`
-- 约束树：`.claude/constraints/{feature}/constraint-tree.yaml`
-- 规范文档：`.claude/specs/{feature}.md`
+- 计划文档：`.claude/adc-result/request/{request-name}/plan.md`
+- 约束树：`.claude/adc-result/request/{request-name}/constraint-tree.yaml`
+- 规范文档：`.claude/adc-result/request/{request-name}/spec.md`
 
 **输出的上下文**：
 - 测试文件列表

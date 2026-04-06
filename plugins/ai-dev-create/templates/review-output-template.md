@@ -3,7 +3,7 @@
 > 审查者：ai-dev-create:reviewer (独立 Agent)
 > 审查日期：{date}
 > 审查范围：{feature}
-> 约束树：.claude/constraints/{feature}/constraint-tree.yaml
+> 约束树：.claude/adc-result/request/{request-name}/constraint-tree.yaml
 
 ---
 

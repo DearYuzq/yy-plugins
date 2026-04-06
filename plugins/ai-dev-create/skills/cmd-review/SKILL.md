@@ -132,7 +132,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 1. 读取 SPEC/PLAN/约束树，确定预期行为
 2. 读取实际代码 diff，发现实际实现
 3. 对比差距，生成审查报告
-4. 输出 `.claude/reviews/{feature}.md`
+4. 输出 `.claude/adc-result/request/{request-name}/review.md`
 
 ### 审查模式切换
 

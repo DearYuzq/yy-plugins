@@ -1,7 +1,8 @@
 ---
 name: implementer
-description: 代码实现专家，负责根据规范、计划和约束树编写生产代码。TDD 驱动，测试优先。实现前参考 tasks/lessons.md 避免重复犯错。
+description: 代码实现专家，负责根据规范、计划和约束树编写生产代码。TDD 驱动，测试优先。实现前参考 .claude/adc-result/experience/lessons.md 避免重复犯错。
 tools: Read, Write, Edit, Grep, Glob, Bash
+model: sonnet
 ---
 
 # Implementer Agent
@@ -11,9 +12,10 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 ## 输入上下文
 
 - TEST 阶段：测试文件路径、失败列表（驱动实现优先级）
-- PLAN 阶段：`.claude/plans/{feature}.md`（文件变更清单、技术约束）
-- 约束树：`.claude/constraints/{feature}/constraint-tree.yaml`（函数签名、约束映射）
-- 项目上下文：`.claude/project-context.md`（代码风格、命名约定、错误处理模式）
+- `.claude/adc-result/request/{request-name}/summaries/convergent-summary.md`（澄清总结）
+- PLAN 阶段：`.claude/adc-result/request/{request-name}/plan.md`（文件变更清单、技术约束）
+- 约束树：`.claude/adc-result/request/{request-name}/constraint-tree.yaml`（函数签名、约束映射）
+- 项目上下文：`.claude/adc-result/context/project-context.md`（代码风格、命名约定、错误处理模式）
 
 ## 输出上下文
 
@@ -39,10 +41,10 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 - 找到根本原因，不打补丁
 - 修复后重新验证整个套件
 - 自动修复 CI 失败问题
-- 修复后更新 `tasks/lessons.md` 记录规律
+- 修复后更新 `.claude/adc-result/experience/lessons.md` 记录规律
 
 ### 自我进化：参考 Lessons
-**每次开始实现前**，检查 `tasks/lessons.md` 是否存在：
+**每次开始实现前**，检查 `.claude/adc-result/experience/lessons.md` 是否存在：
 - 如存在，阅读 "Rules to Always Follow" 避免重复犯错
 - 如本次会话有新规律，追加到 lessons.md
 
@@ -57,7 +59,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 ## 计划更新职责
 
 开始实现前：
-1. 读取 `.claude/plans/{feature}.md`
+1. 读取 `.claude/adc-result/request/{request-name}/plan.md`
 2. 检查进度概览表格，从 🔄/⏳ 步骤继续
 
 完成每个步骤后：
@@ -70,7 +72,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 
 ## 项目上下文对齐
 
-开始实现前，读取 `.claude/project-context.md`：
+开始实现前，读取 `.claude/adc-result/context/project-context.md`：
 
 - **OLD_PROJECT**:
   - 新建文件的路径遵循 "Architecture" 中的目录约定

@@ -9,17 +9,50 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
-// 生成的文档目录（均位于 .claude/ 下）
-const DOC_DIRS = [
-  { path: '.claude/clarifications', pattern: /\.md$/ },
-  { path: '.claude/specs',          pattern: /\.md$/ },
-  { path: '.claude/plans',          pattern: /\.md$/ },
-  { path: '.claude/constraints',    pattern: /\.yaml$/ },
-  { path: '.claude/tests',          pattern: /\.(test|spec)\.(ts|js|py|java|go|rs)$/ },
-  { path: '.claude/reviews',        pattern: /\.md$/ },
-  { path: '.claude/summaries',      pattern: /\.md$/ },
-  { path: '.claude/reports',        pattern: /\.(md|json)$/ }
-];
+// ADC result 根目录
+const ADC_BASE = path.join(process.cwd(), '.claude', 'adc-result', 'request');
+
+/**
+ * Recursively delete files matching pattern under dir
+ */
+function deleteFilesRecursive(dir, pattern) {
+  const deleted = [];
+  const errors = [];
+  if (!fs.existsSync(dir)) return { deleted, errors };
+
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith('.')) {
+          const subResult = deleteFilesRecursive(fullPath, pattern);
+          deleted.push(...subResult.deleted);
+          errors.push(...subResult.errors);
+          // Remove empty directory
+          try {
+            if (fs.readdirSync(fullPath).length === 0) {
+              fs.rmdirSync(fullPath);
+            }
+          } catch { /* ignore */ }
+        }
+      } else if (pattern.test(entry.name)) {
+        fs.unlinkSync(fullPath);
+        deleted.push(fullPath);
+      }
+    }
+    // Remove empty directory
+    try {
+      if (fs.readdirSync(dir).length === 0) {
+        fs.rmdirSync(dir);
+      }
+    } catch { /* ignore */ }
+  } catch (err) {
+    errors.push({ file: dir, error: err.message });
+  }
+
+  return { deleted, errors };
+}
 
 /**
  * 获取会话目录
@@ -36,66 +69,44 @@ function getSessionDir() {
 }
 
 /**
- * 删除目录中的匹配文件（递归）
- */
-function deleteFilesInDir(basePath, { path: dirName, pattern }) {
-  const deleted = [];
-  const errors = [];
-  const dir = path.join(basePath, dirName);
-
-  if (!fs.existsSync(dir)) {
-    return { deleted, errors };
-  }
-
-  try {
-    const entries = fs.readdirSync(dir);
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry);
-      try {
-        const stat = fs.statSync(fullPath);
-        if (stat.isFile() && pattern.test(entry)) {
-          fs.unlinkSync(fullPath);
-          deleted.push(fullPath);
-        } else if (stat.isDirectory()) {
-          // 递归清理子目录
-          const subResult = deleteFilesInDir(dir, { path: entry, pattern });
-          deleted.push(...subResult.deleted);
-          errors.push(...subResult.errors);
-          // 如果子目录空了，删除它
-          try {
-            if (fs.readdirSync(fullPath).length === 0) {
-              fs.rmdirSync(fullPath);
-            }
-          } catch (e) { /* 忽略 */ }
-        }
-      } catch (err) {
-        errors.push({ file: fullPath, error: err.message });
-      }
-    }
-    // 如果目录为空，删除目录
-    if (fs.readdirSync(dir).length === 0) {
-      fs.rmdirSync(dir);
-    }
-  } catch (err) {
-    errors.push({ file: dir, error: err.message });
-  }
-
-  return { deleted, errors };
-}
-
-/**
  * 删除所有生成的文档
  */
 function resetDocs() {
   const results = { deleted: [], errors: [] };
-  const basePath = process.cwd();
 
-  console.log('[ResetDocs] 开始删除 .claude/ 下生成的文档...');
+  if (!fs.existsSync(ADC_BASE)) {
+    console.log('[ResetDocs] 未找到 adc-result 目录，跳过');
+    return results;
+  }
 
-  for (const dirConfig of DOC_DIRS) {
-    const { deleted, errors } = deleteFilesInDir(basePath, dirConfig);
-    results.deleted.push(...deleted);
-    results.errors.push(...errors);
+  console.log('[ResetDocs] 开始删除 .claude/adc-result/request/ 下生成的文档...');
+
+  const dirConfigs = [
+    { subdir: 'clarifications', pattern: /\.md$/ },
+    { subdir: 'spec.md', pattern: /^spec\.md$/ },
+    { subdir: 'plan.md', pattern: /^plan\.md$/ },
+    { subdir: 'constraint-tree.yaml', pattern: /\.yaml$/ },
+    { subdir: 'review.md', pattern: /^review\.md$/ },
+    { subdir: 'summaries', pattern: /\.md$/ },
+    { subdir: 'reports', pattern: /\.(md|json)$/ }
+  ];
+
+  // Scan all request subdirectories
+  try {
+    const requestDirs = fs.readdirSync(ADC_BASE, { withFileTypes: true })
+      .filter(e => e.isDirectory() && !e.name.startsWith('.'))
+      .map(e => path.join(ADC_BASE, e.name, e.name));
+
+    for (const config of dirConfigs) {
+      for (const reqDir of requestDirs) {
+        const targetPath = path.join(reqDir, config.subdir);
+        const { deleted, errors } = deleteFilesRecursive(targetPath, config.pattern);
+        results.deleted.push(...deleted);
+        results.errors.push(...errors);
+      }
+    }
+  } catch (err) {
+    results.errors.push({ file: ADC_BASE, error: err.message });
   }
 
   return results;

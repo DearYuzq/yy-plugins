@@ -195,5 +195,5 @@
 
 ## 相关文件
 
-- 规范文档：`.claude/specs/{feature}.md`（待生成）
-- 实现计划：`.claude/plans/{feature}.md`（待生成）
+- 规范文档：`.claude/adc-result/request/{request-name}/spec.md`（待生成）
+- 实现计划：`.claude/adc-result/request/{request-name}/plan.md`（待生成）

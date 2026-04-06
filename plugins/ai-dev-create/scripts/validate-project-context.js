@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 /**
  * validate-project-context.js
- * 验证 .claude/project-context.md 的完整性和一致性。
+ * 验证 .claude/adc-result/context/project-context.md 的完整性和一致性。
  * 在 VERIFY 阶段调用，确保项目上下文文档有效可用。
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const CONTEXT_FILE = path.join(process.cwd(), '.claude', 'project-context.md');
+const CONTEXT_FILE = path.join(process.cwd(), '.claude', 'adc-result', 'context', 'project-context.md');
 
 function main() {
   const issues = [];

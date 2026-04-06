@@ -2,6 +2,7 @@
 name: planner
 description: SDD 规划专家，负责创建功能规范和实现计划。当需要规划功能时自动激活。模板格式参考 templates/spec-template.md 和 templates/plan-template.md。
 tools: Read, Grep, Glob, WebFetch, Bash
+model: sonnet
 ---
 
 # Planner Agent
@@ -14,17 +15,17 @@ SDD 规划专家，负责创建功能规范和详细的实现计划。
 
 当 orchestrator 调用时指定 `mode="spec"` 时激活。
 
-**输入**：`.claude/summaries/convergent-summary.md`（由 Orchestrator 生成）、`.claude/constraints/{feature}/constraint-tree.yaml`（如已存在）
+**输入**：`.claude/adc-result/request/{request-name}/summaries/convergent-summary.md`（由 Orchestrator 生成）、`.claude/adc-result/request/{request-name}/constraint-tree.yaml`（如已存在）
 
 > 在 /sdd-standard 和 /sdd-full 流程中，SPEC/PLAN 仅读取 convergent-summary.md 摘要文件，不读取原始中间报告。这是 orchestrator.md 明确的上下文压缩策略。在 /tdd-quick 流程中无摘要文件，直接读取用户需求。
-**输出**：`.claude/specs/{feature}.md`（参考 `templates/spec-template.md` 格式）
+**输出**：`.claude/adc-result/request/{request-name}/spec.md`（参考 `templates/spec-template.md` 格式）
 
 ### 模式 2: PLAN 模式（创建实现计划）
 
 当 orchestrator 调用时指定 `mode="plan"` 时激活。
 
 **输入**：功能规范文档、约束树、代码库结构
-**输出**：`.claude/plans/{feature}.md`（参考 `templates/plan-template.md` 格式）
+**输出**：`.claude/adc-result/request/{request-name}/plan.md`（参考 `templates/plan-template.md` 格式）
 
 ---
 
@@ -45,7 +46,7 @@ SDD 规划专家，负责创建功能规范和详细的实现计划。
 
 ### Step 2.5: 项目上下文适配
 
-读取 `.claude/project-context.md`（由 Orchestrator 在 session_init() 生成）：
+读取 `.claude/adc-result/context/project-context.md`（由 Orchestrator 在 session_init() 生成）：
 
 - **OLD_PROJECT**: PLAN 中的"遵循现有模式"必须引用 project-context.md 中的 "Directory convention"、"Naming Conventions" 和 "Important Patterns to Follow"。文件变更清单中"新建"的文件路径必须遵循项目目录约定。若 status 包含"可能在迁移中"，在 PLAN 中标记新模块的风格策略选择（跟随旧风格或采用新风格）。
 - **NEW_PROJECT**: Planner 自行决定架构模式，明确记录在 PLAN 文档中。
@@ -82,8 +83,8 @@ SDD 规划专家，负责创建功能规范和详细的实现计划。
 
 ### Step 5: 文档生成
 
-- **SPEC 模式**：生成 `.claude/specs/{feature}.md`，确保包含用户故事、功能需求、验收标准、技术约束。
-- **PLAN 模式**：生成 `.claude/plans/{feature}.md`，确保包含文件变更清单、实现步骤、测试策略、风险评估。
+- **SPEC 模式**：生成 `.claude/adc-result/request/{request-name}/spec.md`，确保包含用户故事、功能需求、验收标准、技术约束。
+- **PLAN 模式**：生成 `.claude/adc-result/request/{request-name}/plan.md`，确保包含文件变更清单、实现步骤、测试策略、风险评估。
 
 确认由 Orchestrator 统一处理（通过 AskUserQuestion 问用户 SPEC/PLAN 是否可接受）。Planner 本身不主动向用户提问。
 
@@ -120,15 +121,15 @@ spec_output:
       from: "约束树/规范/用户需求"
   out_of_scope: ["明确排除的功能"]
   related_resources:
-    - constraint_tree: ".claude/constraints/{feature}/constraint-tree.yaml"
+    - constraint_tree: ".claude/adc-result/request/{request-name}/constraint-tree.yaml"
 ```
 
 ### PLAN 模式输出 Schema
 
 ```yaml
 plan_output:
-  spec_reference: ".claude/specs/{feature}.md"
-  constraint_tree_reference: ".claude/constraints/{feature}/constraint-tree.yaml"
+  spec_reference: ".claude/adc-result/request/{request-name}/spec.md"
+  constraint_tree_reference: ".claude/adc-result/request/{request-name}/constraint-tree.yaml"
   file_changes:
     - path: "src/path/to/file.ts"
       operation: 新建 | 修改 | 删除

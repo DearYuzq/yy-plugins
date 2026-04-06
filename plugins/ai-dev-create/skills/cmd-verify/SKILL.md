@@ -132,7 +132,7 @@ git diff --name-only
 # 由 orchestrator 动态构造路径，使用 ${CLAUDE_PLUGIN_ROOT} 环境变量
 # 如未设置，使用插件根目录自动推断
 PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
-node "${PLUGIN_ROOT}/scripts/verify-constraints.js" .claude/constraints/{feature}/constraint-tree.yaml
+node "${PLUGIN_ROOT}/scripts/verify-constraints.js" .claude/adc-result/request/{request-name}/constraint-tree.yaml
 ```
 
 检查项目：

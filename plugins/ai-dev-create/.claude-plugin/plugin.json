@@ -1,6 +1,6 @@
 {
   "name": "ai-dev-create",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "约束求解驱动的多阶段开发插件：分散发散→收敛验证→约束提取→TDD闭环→自我进化",
   "author": {
     "name": "yuzq",

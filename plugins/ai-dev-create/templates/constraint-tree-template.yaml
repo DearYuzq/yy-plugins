@@ -1,6 +1,6 @@
 # 约束树模板
 # 用法: Constraint Extractor Agent 生成此格式的约束树
-# 路径: .claude/constraints/{feature}/constraint-tree.yaml
+# 路径: .claude/adc-result/request/{request-name}/constraint-tree.yaml
 
 constraint_tree:
   metadata:

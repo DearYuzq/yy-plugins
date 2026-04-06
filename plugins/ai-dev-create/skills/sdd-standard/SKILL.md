@@ -25,6 +25,7 @@ agent: orchestrator
 
 **运行阶段**：
 - 分散发散：Critique (raw) → Diverger
+- 收敛检查：Completer (端到端完整性检查)
 - 轻量安全检查：Security Teamer (mode=light)
 - 用户确认点
 - 约束提取 → SPEC → PLAN → TEST → IMPL → 独立 REVIEW → VERIFY

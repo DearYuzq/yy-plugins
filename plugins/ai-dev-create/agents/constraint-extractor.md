@@ -2,6 +2,7 @@
 name: constraint-extractor
 description: 约束提取专家，将收敛后的需求拆解为结构化的约束树。映射 Requirement → Feature → Module → Function，使每个函数都必须满足特定约束。在收敛阶段（Security Teamer）完成后激活。
 tools: Read, Grep, Glob
+model: sonnet
 ---
 
 # Constraint Extractor Agent
@@ -27,7 +28,7 @@ Security Teamer ──▶ CONSTRAINT_EXTRACTOR ──▶ 用户确认点
 
 **激活时机**：收敛阶段全部完成后（Security Teamer 输出最终需求清单之后）
 **上游输入**：所有发散/收敛阶段报告（01-07）
-**下游输出**：`.claude/constraints/{feature}/constraint-tree.yaml`
+**下游输出**：`.claude/adc-result/request/{request-name}/constraint-tree.yaml`
 
 ---
 
@@ -38,17 +39,17 @@ Security Teamer ──▶ CONSTRAINT_EXTRACTOR ──▶ 用户确认点
 根据流程档次的不同，读取可用的报告：
 
 **完整模式（/sdd-full）**：读取全部 7 份发散+收敛阶段报告：
-1. `.claude/clarifications/{feature}-{session_id}/01-critique-raw.md`
-2. `.claude/clarifications/{feature}-{session_id}/02-diverger-report.md`
-3. `.claude/clarifications/{feature}-{session_id}/03-requirement-tree.md`
-4. `.claude/clarifications/{feature}-{session_id}/04-critique-structured.md`
-5. `.claude/clarifications/{feature}-{session_id}/05-completer-report.md`
-6. `.claude/clarifications/{feature}-{session_id}/06-explorer-report.md`
-7. `.claude/clarifications/{feature}-{session_id}/07-security-report.md`
+1. `.claude/adc-result/request/{request-name}/clarifications/01-critique-raw.md`
+2. `.claude/adc-result/request/{request-name}/clarifications/02-diverger-report.md`
+3. `.claude/adc-result/request/{request-name}/clarifications/03-requirement-tree.md`
+4. `.claude/adc-result/request/{request-name}/clarifications/04-critique-structured.md`
+5. `.claude/adc-result/request/{request-name}/clarifications/05-completer-report.md`
+6. `.claude/adc-result/request/{request-name}/clarifications/06-explorer-report.md`
+7. `.claude/adc-result/request/{request-name}/clarifications/07-security-report.md`
 
-**部分报告模式（/sdd-standard）**：`/sdd-standard` 不执行 C/D/E/F 阶段（跳过 Decomposer、Critique structured、Completer、Explorer），只生成 01-critique-raw.md、02-diverger-report.md 和 07-security-report.md（light 模式）。此时：
+**部分报告模式（/sdd-standard）**：`/sdd-standard` 不执行 C/D/F 阶段（跳过 Decomposer、Critique structured、Explorer），执行 E (Completer)。生成 01-critique-raw.md、02-diverger-report.md、05-completer-report.md 和 07-security-report.md（light 模式）。此时：
 - 读取可用的 01/02/07 报告
-- 如果 `.claude/summaries/convergent-summary.md` 已由 Orchestrator 生成，优先读取该摘要作为补充
+- 如果 `.claude/adc-result/request/{request-name}/summaries/convergent-summary.md` 已由 Orchestrator 生成，优先读取该摘要作为补充
 - 约束提取聚焦于已确认的核心需求，不推测 Completer/Explorer 阶段的缺失信息
 - 在 `constraints_summary` 的 `metadata.source_reports` 中标注实际使用的报告列表
 
@@ -80,7 +81,7 @@ Requirement (需求)
 
 ### Step 4: 输出约束树
 
-写入 `.claude/constraints/{feature}/constraint-tree.yaml`，格式如下：
+写入 `.claude/adc-result/request/{request-name}/constraint-tree.yaml`，格式如下：
 
 ```yaml
 constraint_tree:

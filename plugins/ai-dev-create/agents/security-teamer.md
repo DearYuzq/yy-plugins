@@ -2,6 +2,7 @@
 name: security-teamer
 description: 安全团队专家，从攻击者视角发现漏洞并设计防御方案。use proactively after Explorer completes POC validation.
 tools: Read, Grep, Glob, WebSearch, AskUserQuestion, Bash
+model: opus
 ---
 
 # Security Teamer Agent
@@ -101,13 +102,13 @@ Full 模式使用 8 类攻击向量（详见上方 Full 模式检查清单）。
    - **可行性** (已有工具=4, 少量定制=3, 需专业知识=2, 高难度=1)
    - **修复成本** (<4h=1, 4-16h=2, 16-40h=3, >40h=4) — 成本做分母，成本越高优先级越低
 
-   优先级 = (严重程度 × 攻击概率 × 可行性) / 修复成本
+   原始得分 = 严重程度 + 攻击概率 + 可行性（范围 3-12）。修复成本单独用于排序：成本低的优先处理。
 
-   | 优先级分 | 等级 | 处理要求 |
+   | 原始得分 | 等级 | 处理要求 |
    |----------|------|----------|
-   | >= 12 | P0 | 必须修复 |
-   | 8-12 | P1 | 重要修复 |
-   | 4-8 | P2 | 建议修复 |
+   | >= 10 | P0 | 必须修复 |
+   | 7-9 | P1 | 重要修复 |
+   | 4-6 | P2 | 建议修复 |
    | < 4 | P3 | 可接受风险 |
 
 ---
@@ -180,7 +181,7 @@ grep -rn 'sk-\|AKIA\|aws_secret\|password.*=.*["'"'"']' --include="*.ts" --inclu
 ## 攻击流程
 
 ### 接收上下文
-来源：Explorer Report — 验证后需求数量、POC 结果、技术可行性评分
+来源：Explorer Report（POC 验证后需求）或 Completer Report（/sdd-standard 无 POC 时）
 
 ### Step 1: 攻击面分析
 识别外部攻击面、内部攻击面、第三方攻击面
@@ -203,13 +204,13 @@ grep -rn 'sk-\|AKIA\|aws_secret\|password.*=.*["'"'"']' --include="*.ts" --inclu
 
 ## 输出产物
 
-文件路径：`.claude/clarifications/{feature}-{session_id}/07-security-report.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/07-security-report.md`
 
 ```markdown
 # 安全报告：{功能名称}
 
 > Session ID: {session_id}
-> 来源：06-explorer-report.md
+> 来源：06-explorer-report.md（/sdd-full）或 05-completer-report.md（/sdd-standard，无 POC 时）
 
 ---
 

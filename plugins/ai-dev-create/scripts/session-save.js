@@ -36,14 +36,46 @@ function getSessionDir() {
 
 function getProjectDirs() {
   const cwd = process.cwd();
-  const claudeDir = path.join(cwd, '.claude');
+  const adcResult = path.join(cwd, '.claude', 'adc-result', 'request');
   return {
-    clarifications: path.join(claudeDir, 'clarifications'),
-    specs: path.join(claudeDir, 'specs'),
-    plans: path.join(claudeDir, 'plans'),
-    tests: path.join(claudeDir, 'tests'),
-    reviews: path.join(claudeDir, 'reviews')
+    adcResult,
+    clarifications: adcResult,  // scan all request subdirs for clarifications/
+    specs: adcResult,            // scan all request subdirs for spec.md
+    plans: adcResult,            // scan all request subdirs for plan.md
+    tests: cwd,                  // tests live in project source, not .claude/
+    reviews: adcResult           // scan all request subdirs for review.md
   };
+}
+
+/**
+ * Recursively find files matching pattern in directory and all subdirectories
+ * Skips hidden directories (starting with .)
+ */
+function findFilesRecursive(dir, pattern) {
+  if (!fs.existsSync(dir)) return [];
+  let results = [];
+  try {
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        if (!entry.name.startsWith('.')) { // Skip hidden dirs
+          results = results.concat(findFilesRecursive(fullPath, pattern));
+        }
+      } else if (pattern.test(entry.name)) {
+        results.push(fullPath);
+      }
+    }
+  } catch {
+    // ignore permission errors
+  }
+  return results;
+}
+
+function findLatestFile(baseDir, subdir, pattern) {
+  const dir = path.join(baseDir, subdir);
+  if (!fs.existsSync(dir)) return null;
+  return findFilesRecursive(dir, pattern).sort().pop() || null;
 }
 
 function findFiles(dir, pattern) {
@@ -70,41 +102,50 @@ function detectCurrentPhase() {
     }
   }
 
-  // 回退策略: 基于文件存在的启发式检测
+  // 回退策略: 基于文件存在的启发式检测（使用递归扫描新目录结构）
   const dirs = getProjectDirs();
 
-  const hasClarification = fs.existsSync(dirs.clarifications) && findFiles(dirs.clarifications, /\.md$/).length > 0;
-  const hasSpec = fs.existsSync(dirs.specs) && findFiles(dirs.specs, /\.md$/).length > 0;
-  const hasPlan = fs.existsSync(dirs.plans) && findFiles(dirs.plans, /\.md$/).length > 0;
-  const hasTests = fs.existsSync(dirs.tests) && findFiles(dirs.tests, /\.(test|spec)\.(ts|js|py|java)$/).length > 0;
-  const hasReview = fs.existsSync(dirs.reviews) && findFiles(dirs.reviews, /\.md$/).length > 0;
+  const clarificationFiles = findFilesRecursive(dirs.clarifications, /clarifications\/.*\.md$/);
+  const specFiles = findFilesRecursive(dirs.specs, /spec\.md$/);
+  const planFiles = findFilesRecursive(dirs.plans, /plan\.md$/);
+  const reviewFiles = findFilesRecursive(dirs.reviews, /review\.md$/);
+
+  const hasClarification = clarificationFiles.length > 0;
+  const hasSpec = specFiles.length > 0;
+  const hasPlan = planFiles.length > 0;
+  const hasReview = reviewFiles.length > 0;
+
+  // 检查是否有测试文件但未通过测试（TEST 阶段）
+  const testFiles = findFilesRecursive(process.cwd(), /(__tests__\/|\.test\.(ts|js|tsx|mjs)|\.spec\.(ts|js|tsx|mjs)|test_.*\.py|.*_test\.go|.*\.test\.java)$/);
+  const hasTestFiles = testFiles.length > 0;
 
   // 推断当前阶段（按照流程顺序判断）
   if (!hasClarification) return 'CLARIFY';
   if (!hasSpec) return 'SPEC';
   if (!hasPlan) return 'PLAN';
-  if (!hasTests) return 'TEST';
-  if (!hasReview) return 'REVIEW';
+  // TEST 阶段：计划已存在、未审查、测试文件不存在或需要编写新测试
+  if (!hasReview && !hasTestFiles) return 'TEST';
+  if (!hasReview) return 'IMPL';
 
   // review 已存在，检查是否有验证报告
-  const reportsDir = path.join(cwd, '.claude', 'reports');
-  const hasVerifyReport = fs.existsSync(reportsDir) && findFiles(reportsDir, /\.md$/).length > 0;
+  const reportsDir = path.join(process.cwd(), '.claude', 'adc-result', 'request');
+  const hasVerifyReport = findFilesRecursive(reportsDir, /constraint-coverage\.md$/).length > 0;
   if (hasVerifyReport) return 'VERIFY';
 
-  return 'IMPL';
+  return 'REVIEW';
 }
 
 function generateNextStep(phase) {
   const steps = {
-    'CLARIFY': '运行 /clarify 澄清需求',
-    'SPEC': '运行 /spec 创建功能规范',
-    'PLAN': '运行 /plan 生成实现计划',
+    'CLARIFY': '运行 /ai-dev-create:clarify 澄清需求',
+    'SPEC': '运行 /ai-dev-create:spec 创建功能规范',
+    'PLAN': '运行 /ai-dev-create:plan 生成实现计划',
     'TEST': '运行测试命令编写测试用例',
-    'IMPL': '运行 /impl 实现代码',
-    'REVIEW': '运行 /review 进行代码审查',
-    'VERIFY': '运行 /verify 验证实现'
+    'IMPL': '运行 /ai-dev-create:impl 实现代码',
+    'REVIEW': '运行 /ai-dev-create:review 进行代码审查',
+    'VERIFY': '运行 /ai-dev-create:verify 验证实现'
   };
-  return steps[phase] || '运行 /status 查看状态';
+  return steps[phase] || '运行 /ai-dev-create:status 查看状态';
 }
 
 function loadRetryCounts(sessionFile) {
@@ -135,12 +176,11 @@ function saveSession() {
   // 加载之前的重试计数
   const previousRetryCounts = loadRetryCounts(sessionFile);
 
-  // 收集文件信息
-  const clarificationFiles = findFiles(dirs.clarifications, /\.md$/);
-  const specFiles = findFiles(dirs.specs, /\.md$/);
-  const planFiles = findFiles(dirs.plans, /\.md$/);
-  const testFiles = findFiles(dirs.tests, /\.(test|spec)\.(ts|js|py|java)$/);
-  const reviewFiles = findFiles(dirs.reviews, /\.md$/);
+  // 收集文件信息（使用递归扫描新目录结构）
+  const clarificationFiles = findFilesRecursive(dirs.clarifications, /clarifications\/.*\.md$/);
+  const specFiles = findFilesRecursive(dirs.specs, /spec\.md$/);
+  const planFiles = findFilesRecursive(dirs.plans, /plan\.md$/);
+  const reviewFiles = findFilesRecursive(dirs.reviews, /review\.md$/);
 
   const session = {
     // 基本信息
@@ -155,7 +195,7 @@ function saveSession() {
         CLARIFY: clarificationFiles.length > 0 ? 'completed' : 'pending',
         SPEC: specFiles.length > 0 ? 'completed' : 'pending',
         PLAN: planFiles.length > 0 ? 'completed' : 'pending',
-        TEST: testFiles.length > 0 ? 'completed' : 'pending',
+        TEST: 'pending',
         IMPL: 'pending',
         REVIEW: reviewFiles.length > 0 ? 'completed' : 'pending',
         VERIFY: 'pending'
@@ -168,10 +208,9 @@ function saveSession() {
 
     // 文件信息
     files: {
-      clarificationFile: clarificationFiles[0] || null,
+      clarificationFiles: clarificationFiles,
       specFile: specFiles[0] || null,
       planFile: planFiles[0] || null,
-      testFiles: testFiles,
       reviewFile: reviewFiles[0] || null,
       implFiles: []
     },

@@ -142,14 +142,14 @@ CONSTRAINTS
 
 ## 相关文档
 
-- 批判报告 (raw)：`.claude/clarifications/{session_id}/01-critique-raw.md`
-- 发散报告：`.claude/clarifications/{session_id}/02-diverger-report.md`
-- 需求树：`.claude/clarifications/{session_id}/03-requirement-tree.md`
-- 批判报告 (structured)：`.claude/clarifications/{session_id}/04-critique-structured.md`
-- 补全报告：`.claude/clarifications/{session_id}/05-completer-report.md`
-- 探测报告：`.claude/clarifications/{session_id}/06-explorer-report.md`
-- 安全报告：`.claude/clarifications/{session_id}/07-security-report.md`
-- POC 代码：`.claude/clarifications/{session_id}/poc/`
+- 批判报告 (raw)：`.claude/adc-result/request/{request-name}/clarifications/01-critique-raw.md`
+- 发散报告：`.claude/adc-result/request/{request-name}/clarifications/02-diverger-report.md`
+- 需求树：`.claude/adc-result/request/{request-name}/clarifications/03-requirement-tree.md`
+- 批判报告 (structured)：`.claude/adc-result/request/{request-name}/clarifications/04-critique-structured.md`
+- 补全报告：`.claude/adc-result/request/{request-name}/clarifications/05-completer-report.md`
+- 探测报告：`.claude/adc-result/request/{request-name}/clarifications/06-explorer-report.md`
+- 安全报告：`.claude/adc-result/request/{request-name}/clarifications/07-security-report.md`
+- POC 代码：`.claude/adc-result/request/{request-name}/clarifications/poc/`
 
 ---
 

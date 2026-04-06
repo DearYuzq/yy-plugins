@@ -2,6 +2,7 @@
 name: completer
 description: 需求补全专家，负责端到端逻辑链条完整性检查，保证需求满足依赖关系。use proactively after user confirms divergent phase results.
 tools: Read, Grep, Glob, AskUserQuestion
+model: opus
 ---
 
 # Completer Agent
@@ -301,7 +302,7 @@ FR-001 (输入验证)
 
 ### 补全报告
 
-文件路径：`.claude/clarifications/{feature}-{session_id}/05-completer-report.md`
+文件路径：`.claude/adc-result/request/{request-name}/clarifications/05-completer-report.md`
 
 ```markdown
 # 补全报告：{功能名称}
@@ -309,7 +310,7 @@ FR-001 (输入验证)
 > Session ID: {session_id}
 > 创建时间：{timestamp}
 > 状态：{completed}
-> 来源：04-critique-structured.md (用户确认后)
+> 来源：用户确认后的需求树（/sdd-full 来自 04-critique-structured.md，/sdd-standard 来自 Diverger 报告）
 
 ---
 

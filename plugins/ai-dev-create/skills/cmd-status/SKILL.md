@@ -30,7 +30,7 @@ argument-hint: [--reset] [--reset:docs] [--reset:session]
 | 参数 | 说明 | 删除内容 |
 |------|------|----------|
 | `--reset` | 完全重置 | 文档 + 会话状态 |
-| `--reset:docs` | 仅删除文档 | clarifications/, specs/, plans/, tests/, reviews/ |
+| `--reset:docs` | 仅删除文档 | adc-result/request/{request-name}/ 下的 clarifications/、spec.md、plan.md、constraint-tree.yaml、review.md、summaries/、reports/ |
 | `--reset:session` | 仅删除状态 | ~/.claude/sessions/.../latest.json, .claude/session.json |
 
 **删除的文件类型**：
@@ -38,10 +38,12 @@ argument-hint: [--reset] [--reset:docs] [--reset:session]
 | 目录 | 文件模式 |
 |------|----------|
 | clarifications/ | *.md |
-| specs/ | *.md |
-| plans/ | *.md |
-| tests/ | *.test.*, *.spec.* |
-| reviews/ | *.md |
+| spec.md | *.md |
+| plan.md | *.md |
+| constraint-tree.yaml | *.yaml |
+| review.md | *.md |
+| summaries/ | *.md |
+| reports/ | *.md, *.json |
 
 **执行方式**：直接删除，无需确认。
 

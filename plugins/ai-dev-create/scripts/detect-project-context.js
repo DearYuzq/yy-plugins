@@ -2,7 +2,7 @@
 /**
  * detect-project-context.js
  * 检测项目类型（新/老/演进中/混合），提取代码风格、命名约定、测试框架、架构模式等信息。
- * 输出 .claude/project-context.md 并缓存结果。
+ * 输出 .claude/adc-result/context/project-context.md 并缓存结果。
  *
  * 缓存策略: 结果缓存在 .claude/.project-context-cache.json，TTL 30 分钟。
  */
@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PLUGIN_ROOT = path.resolve(__dirname, '..');
-const CLAUDE_DIR = path.join(process.cwd(), '.claude');
+const CLAUDE_DIR = path.join(process.cwd(), '.claude', 'adc-result', 'context');
 const CACHE_FILE = path.join(CLAUDE_DIR, '.project-context-cache.json');
 const OUTPUT_FILE = path.join(CLAUDE_DIR, 'project-context.md');
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 minutes

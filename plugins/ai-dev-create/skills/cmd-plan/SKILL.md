@@ -17,7 +17,7 @@ allowed-tools: Read, Write, Grep, Glob
 ```bash
 /ai-dev-create:plan                    # 基于当前规范生成计划
 /ai-dev-create:plan "功能描述"          # 直接规划功能
-/ai-dev-create:plan --spec .claude/specs/xxx.md # 基于指定规范
+/ai-dev-create:plan --spec-path .claude/adc-result/request/{request-name}/spec.md # 基于指定规范
 ```
 
 ## 输出
@@ -100,11 +100,11 @@ Agent 工具参数：
 ### 上下文传递
 
 **接收上一阶段的上下文**：
-- 规范文档路径：`.claude/specs/{feature}.md`
-- 澄清文档路径（如有）：`.claude/clarifications/{feature}/`
+- 规范文档路径：`.claude/adc-result/request/{request-name}/spec.md`
+- 澄清文档路径（如有）：`.claude/adc-result/request/{request-name}/clarifications/`
 
 **传递给下一阶段的上下文**：
-- 计划文档路径：`.claude/plans/{feature}.md`
+- 计划文档路径：`.claude/adc-result/request/{request-name}/plan.md`
 - 文件变更清单
 - 测试策略
 - 风险评估结果
@@ -114,5 +114,5 @@ Agent 工具参数：
 1. 读取规范文档或接收功能描述
 2. 使用 Agent 工具调用 planner agent
 3. 等待 agent 返回计划
-4. 保存计划到 `.claude/plans/{feature}.md`
+4. 保存计划到 `.claude/adc-result/request/{request-name}/plan.md`
 5. 显示计划摘要，请求用户确认

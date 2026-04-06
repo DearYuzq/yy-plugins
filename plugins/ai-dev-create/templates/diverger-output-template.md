@@ -2,7 +2,7 @@
 
 ## 文件路径
 
-`.claude/clarifications/{feature}-{session_id}/02-diverger-report.md`
+`.claude/adc-result/request/{request-name}/clarifications/02-diverger-report.md`
 
 ## 模板内容
 
