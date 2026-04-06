@@ -34,35 +34,39 @@ function getSessionDir() {
   return path.join(os.homedir(), '.claude', 'sessions', projectHash);
 }
 
-function getProjectDirs() {
+function getProjectDirs(requestName) {
   const cwd = process.cwd();
-  const adcResult = path.join(cwd, '.claude', 'adc-result', 'request');
+  const requestBase = path.join(cwd, '.claude', 'adc-result', 'request');
+  const targetDir = requestName ? path.join(requestBase, requestName) : requestBase;
+  const isScoped = !!requestName;
   return {
-    adcResult,
-    clarifications: adcResult,  // scan all request subdirs for clarifications/
-    specs: adcResult,            // scan all request subdirs for spec.md
-    plans: adcResult,            // scan all request subdirs for plan.md
-    tests: cwd,                  // tests live in project source, not .claude/
-    reviews: adcResult           // scan all request subdirs for review.md
+    adcResult: targetDir,
+    clarifications: isScoped ? path.join(targetDir, 'clarifications') : targetDir,
+    specs: targetDir,
+    plans: targetDir,
+    tests: cwd,
+    reviews: isScoped ? path.join(targetDir, 'reviews') : targetDir
   };
 }
 
 /**
  * Recursively find files matching pattern in directory and all subdirectories
  * Skips hidden directories (starting with .)
+ * When relPath is provided internally, matches relative paths against pattern
  */
-function findFilesRecursive(dir, pattern) {
+function findFilesRecursive(dir, pattern, relPath) {
   if (!fs.existsSync(dir)) return [];
   let results = [];
   try {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
+      const entryRel = relPath ? path.join(relPath, entry.name) : entry.name;
       if (entry.isDirectory()) {
         if (!entry.name.startsWith('.')) { // Skip hidden dirs
-          results = results.concat(findFilesRecursive(fullPath, pattern));
+          results = results.concat(findFilesRecursive(fullPath, pattern, entryRel));
         }
-      } else if (pattern.test(entry.name)) {
+      } else if (pattern.test(entryRel)) {
         results.push(fullPath);
       }
     }
@@ -86,11 +90,14 @@ function findFiles(dir, pattern) {
 }
 
 function detectCurrentPhase() {
-  // 优先策略: 读取 session.json 中持久化的 phase 字段
+  // 优先策略: 读取 session.json 中持久化的 phase 字段，并提取 requestName
   const projectSessionFile = path.join(process.cwd(), '.claude', 'session.json');
+  let requestName = null;
   if (fs.existsSync(projectSessionFile)) {
     try {
       const existing = JSON.parse(fs.readFileSync(projectSessionFile, 'utf8'));
+      // 始终提取 requestName 供回退策略使用
+      requestName = existing.sddState?.requestName || null;
       if (existing.sddState && existing.sddState.currentPhase) {
         const phase = existing.sddState.currentPhase;
         if (SDD_PHASES.includes(phase)) {
@@ -102,10 +109,12 @@ function detectCurrentPhase() {
     }
   }
 
-  // 回退策略: 基于文件存在的启发式检测（使用递归扫描新目录结构）
-  const dirs = getProjectDirs();
+  // 回退策略: 基于文件存在的启发式检测（按需求作用域递归扫描）
+  const dirs = getProjectDirs(requestName);
 
-  const clarificationFiles = findFilesRecursive(dirs.clarifications, /clarifications\/.*\.md$/);
+  // scoped 模式下目录已是 clarifications/，正则不需要前缀
+  const clarPattern = requestName ? /.*\.md$/ : /clarifications\/.*\.md$/;
+  const clarificationFiles = findFilesRecursive(dirs.clarifications, clarPattern);
   const specFiles = findFilesRecursive(dirs.specs, /spec\.md$/);
   const planFiles = findFilesRecursive(dirs.plans, /plan\.md$/);
   const reviewFiles = findFilesRecursive(dirs.reviews, /review\.md$/);
@@ -128,7 +137,9 @@ function detectCurrentPhase() {
   if (!hasReview) return 'IMPL';
 
   // review 已存在，检查是否有验证报告
-  const reportsDir = path.join(process.cwd(), '.claude', 'adc-result', 'request');
+  const reportsDir = requestName
+    ? path.join(process.cwd(), '.claude', 'adc-result', 'request', requestName)
+    : path.join(process.cwd(), '.claude', 'adc-result', 'request');
   const hasVerifyReport = findFilesRecursive(reportsDir, /constraint-coverage\.md$/).length > 0;
   if (hasVerifyReport) return 'VERIFY';
 
@@ -170,14 +181,27 @@ function saveSession() {
     fs.mkdirSync(sessionDir, { recursive: true });
   }
 
-  const dirs = getProjectDirs();
+  // 尝试从已有 session.json 提取 requestName
+  let requestName = null;
+  const projectSessionFile = path.join(process.cwd(), '.claude', 'session.json');
+  if (fs.existsSync(projectSessionFile)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(projectSessionFile, 'utf8'));
+      requestName = existing.sddState?.requestName || null;
+    } catch {
+      // 忽略
+    }
+  }
+
+  const dirs = getProjectDirs(requestName);
   const currentPhase = detectCurrentPhase();
 
   // 加载之前的重试计数
   const previousRetryCounts = loadRetryCounts(sessionFile);
 
   // 收集文件信息（使用递归扫描新目录结构）
-  const clarificationFiles = findFilesRecursive(dirs.clarifications, /clarifications\/.*\.md$/);
+  const clarPattern = requestName ? /.*\.md$/ : /clarifications\/.*\.md$/;
+  const clarificationFiles = findFilesRecursive(dirs.clarifications, clarPattern);
   const specFiles = findFilesRecursive(dirs.specs, /spec\.md$/);
   const planFiles = findFilesRecursive(dirs.plans, /plan\.md$/);
   const reviewFiles = findFilesRecursive(dirs.reviews, /review\.md$/);
@@ -190,6 +214,7 @@ function saveSession() {
 
     // SDD 流程状态
     sddState: {
+      requestName: requestName || 'unknown',
       currentPhase: currentPhase,
       phaseStatus: {
         CLARIFY: clarificationFiles.length > 0 ? 'completed' : 'pending',

@@ -24,6 +24,7 @@ FUNCTION session_init():
   4. 读取 templates/todo-template.md，使用其格式创建/更新 tasks/todo.md，写入可勾选执行计划
   5. **执行项目上下文检测（轻量探测）**：运行 `detect-project-context.js`，生成 `.claude/adc-result/context/project-context.md`。若已有缓存（30 分钟内）则复用。
   6. 检测是否存在已有该需求的澄清产物（见下方"产物复用检测"）
+  7. **跨需求信息提示**：运行 `cross-requirement-check.js --gate pre-spec --json 2>/dev/null`。若发现其他需求的同名冲突、路径冲突、约束冲突，输出信息提示用户（不阻塞流程）。
 ```
 
 > 项目上下文文档 `.claude/adc-result/context/project-context.md` 由 session_init() 自动生成且项目级共享，所有后续 Agent（Planner、Tester、Implementer、Reviewer）必须读取并遵循其中约定的风格。
@@ -60,6 +61,78 @@ IF .claude/adc-result/request/{request-name}/clarifications/poc/ 目录存在:
 该步骤自动执行，无需 AskUserQuestion。归档包含当前需求目录下的 poc/ 整个目录。用户如需查看归档 POC，可访问 `.claude/adc-result/request/{request-name}/clarifications/.poc-archive/`。
 
 > 📌 注意：POC 清理仅由 orchestrator 执行，Explorer Agent 不主动触发清理。详见 `agents/explorer.md` "POC 代码管理" 章节。
+
+---
+
+## 跨需求冲突检测与质量门
+
+每次启动会话时（`session_init()` 第 7 步），运行跨需求检查作为信息提示。在以下关键节点执行质量门检查：
+
+### 质量门总览
+
+| 质量门 | 阶段 | 检查内容 | 阻塞策略 |
+|-------|------|---------|----------|
+| CR-INFO | SESSION-INIT | 全局跨需求冲突扫描 | 信息提示，不阻塞 |
+| CR-NAMING | PRE-SPEC | 函数/类名跨需求冲突 | 自动解决 |
+| CR-PATH | PRE-SPEC | 同文件被多需求修改 | AskUserQuestion |
+| CR-CONSTRAINT | PRE-SPEC | 数值约束矛盾 | 取严格值 |
+| CR-DEPENDENCY | POST-PLAN | 依赖目标重合/循环 | 生成桥接计划 |
+| CR-CROSSREF | PRE-VERIFY | 跨需求引用有效性 | 信息提示 |
+
+### Pre-SPEC 质量门（约束树生成后，SPEC 之前）
+
+```
+FUNCTION pre_spec_quality_gate():
+  运行: node cross-requirement-check.js --gate pre-spec
+  读取: .claude/adc-result/reports/cross-requirement-conflicts.md
+
+  IF 命名冲突 found:
+    → 对每个冲突函数名，自动生成前缀方案: "{request-name}_" 前缀
+    → 更新 .claude/adc-result/request/{request-name}/constraint-tree.yaml 中的函数名
+    → 通知用户："已自动解决 N 个命名冲突"
+
+  IF 路径冲突 found:
+    → 列出冲突文件和涉及需求
+    → AskUserQuestion: "多个需求将修改同一文件 {path}。确认继续？"
+    → 用户确认或拒绝
+
+  IF 约束冲突 found:
+    → 取更严格的值作为当前需求的约束
+    → 更新 constraint-tree.yaml 中的对应约束
+    → 通知用户："已采用更严格约束: {description}"
+```
+
+### Post-PLAN 质量门（PLAN 生成后，TEST 之前）
+
+```
+FUNCTION post_plan_quality_gate():
+  运行: node cross-requirement-check.js --gate post-plan
+  读取: .claude/adc-result/reports/cross-requirement-conflicts.md
+
+  IF 依赖冲突 found:
+    → 生成依赖桥接计划（dependency bridge plan）
+    → 检查是否存在循环依赖：需求 A 依赖 B 的接口，B 又依赖 A 的接口
+    → IF 循环依赖:
+        → AskUserQuestion: "检测到 {reqA} 和 {reqB} 存在循环依赖。建议将共享接口提取到独立的 {shared-module} 中。是否更新 PLAN？"
+        → 用户确认后更新 plan.md，标记 shared module 提取
+    → ELSE:
+        → 通知用户依赖关系，确保 PLAN 中包含接口兼容性验证
+```
+
+### Pre-VERIFY 质量门（REVIEW 后，VERIFY 前）
+
+```
+FUNCTION pre_verify_quality_gate():
+  运行: node cross-requirement-check.js --gate pre-test
+  （当前为轻量检查，无阻塞项时继续）
+```
+
+### 跨需求冲突自动解决原则
+
+1. **命名冲突** → 自动添加 `{request-name}_` 前缀，修改 `constraint-tree.yaml`
+2. **路径冲突** → AskUserQuestion 确认协调方案
+3. **约束冲突** → 自动采用更严格值（安全优先），记录决策到 `divergent-summary.md`
+4. **依赖冲突** → 生成桥接计划，AskUserQuestion 确认后更新 PLAN
 
 ## 全程强制规则
 
@@ -280,7 +353,7 @@ IF 检查不通过:
 
 ### 收敛阶段质量门（E/G 阶段后自动执行，不消耗重试次数）
 
-E 和 G 阶段没有自动化质量门，必须在进入收敛摘要生成前执行以下硬性检查。任一不满足时，通知对应 Agent 重新执行（最多重试 1 次）。
+E 和 G 阶段没有自动化质量门，必须在进入收敛摘要生成前执行以下硬性检查。任一不满足时，通知对应 Agent 重新执行（最多重试 1 次）。注意：Pre-SPEC 质量门（见"跨需求冲突检测与质量门"章节）在约束树生成后单独执行。
 
 ```
 Completer 质量门（E 阶段后）：

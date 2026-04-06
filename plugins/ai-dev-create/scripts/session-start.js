@@ -38,7 +38,7 @@ function loadSession() {
 
 function loadLessons() {
   const cwd = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const lessonsFile = path.join(cwd, 'tasks', 'lessons.md');
+  const lessonsFile = path.join(cwd, '.claude', 'adc-result', 'experience', 'lessons.md');
 
   if (!fs.existsSync(lessonsFile)) {
     return null;
