@@ -27,10 +27,22 @@ constraint_tree:
           name: "{模块名称}"
           path: "{预估文件路径}"
           functions:
-            - signature: "{函数签名}"
+            - signature: "{函数签名（完整字符串，供参考）}"
+              name: "{函数名}"
+              language: ts | py | java | go | rust
+              parameters:
+                - name: user
+                  type: UserDto
+                  optional: false
+                - name: options
+                  type: "{CreateOptions}"
+                  optional: true
+              return_type: Promise<User>
               constraint_ids: ["C-001"]
               tests:
-                - "{测试用例描述}"
+                - test_name: "{测试用例名称}"
+                  description: "{测试描述}"
+                  type: unit | integration | e2e
 
   constraints_summary:
     total: 0

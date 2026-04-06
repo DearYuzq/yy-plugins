@@ -35,7 +35,9 @@ Security Teamer ──▶ CONSTRAINT_EXTRACTOR ──▶ 用户确认点
 
 ### Step 1: 读取上游报告
 
-读取以下全部 8 份报告（发散+收敛阶段）：
+根据流程档次的不同，读取可用的报告：
+
+**完整模式（/sdd-full）**：读取全部 7 份发散+收敛阶段报告：
 1. `.claude/clarifications/{feature}-{session_id}/01-critique-raw.md`
 2. `.claude/clarifications/{feature}-{session_id}/02-diverger-report.md`
 3. `.claude/clarifications/{feature}-{session_id}/03-requirement-tree.md`
@@ -43,6 +45,14 @@ Security Teamer ──▶ CONSTRAINT_EXTRACTOR ──▶ 用户确认点
 5. `.claude/clarifications/{feature}-{session_id}/05-completer-report.md`
 6. `.claude/clarifications/{feature}-{session_id}/06-explorer-report.md`
 7. `.claude/clarifications/{feature}-{session_id}/07-security-report.md`
+
+**部分报告模式（/sdd-standard）**：`/sdd-standard` 不执行 C/D/E/F 阶段（跳过 Decomposer、Critique structured、Completer、Explorer），只生成 01-critique-raw.md、02-diverger-report.md 和 07-security-report.md（light 模式）。此时：
+- 读取可用的 01/02/07 报告
+- 如果 `.claude/summaries/convergent-summary.md` 已由 Orchestrator 生成，优先读取该摘要作为补充
+- 约束提取聚焦于已确认的核心需求，不推测 Completer/Explorer 阶段的缺失信息
+- 在 `constraints_summary` 的 `metadata.source_reports` 中标注实际使用的报告列表
+
+**内联约束模式（/tdd-quick）**：`/tdd-quick` 不生成中间报告文件。约束直接来源于 `tasks/constraints-inline.md`，无需运行此 Agent。
 
 ### Step 2: 约束分类
 

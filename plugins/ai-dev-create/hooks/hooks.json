@@ -20,6 +20,15 @@
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/quality-check.js\""
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/quality-check.js\""
+          }
+        ]
       }
     ],
     "Stop": [

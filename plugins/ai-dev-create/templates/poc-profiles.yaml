@@ -1,0 +1,127 @@
+# POC Profile Schema Definition
+#
+# 每个 profile 必须包含以下字段:
+# name:          string  (唯一标识符)
+# allow_external_deps: boolean
+# allow_install: boolean
+# allow_network: boolean
+# allow_side_effects: boolean
+# max_files:     integer (可选, 0 表示不限制)
+# max_lines:     integer (可选, 0 表示不限制)
+# timeout:       integer (秒)
+# suitable_for:  string[] (适用场景列表)
+# not_suitable_for: string[] (不适用场景列表)
+#
+# risk_patterns 中每个条目必须包含:
+# pattern:       string  (正则表达式或关键词)
+# profile:       string  (对应的 profile 名称)
+
+# POC Profiles 定义
+# 定义了不同技术风险模式对应的 POC 验证参数
+
+profiles:
+  single-file:
+    name: "单文件验证"
+    description: "验证简单 API 可用性、语法兼容性、基础算法"
+    max_files: 1
+    max_lines_per_file: 100
+    allow_external_deps: false
+    allow_install: false
+    allow_side_effects: false
+    allow_network: false
+    timeout_seconds: 30
+    suitable_for:
+      - "API 是否存在/可用"
+      - "语法/类型兼容性"
+      - "简单算法可行性"
+      - "正则表达式有效性"
+
+  integration:
+    name: "集成验证"
+    description: "验证库之间兼容性、框架集成、数据库连接"
+    max_files: 5
+    max_lines_per_file: 300
+    allow_external_deps: true
+    allow_install: true
+    allow_side_effects: true
+    side_effect_scope: "隔离临时目录/内存数据库"
+    allow_network: false
+    mock_external: true
+    timeout_seconds: 60
+    suitable_for:
+      - "ORM 与数据库连接"
+      - "中间件集成"
+      - "框架生命周期"
+      - "多库协作兼容性"
+
+  concurrency:
+    name: "并发验证"
+    description: "验证竞态条件、锁机制、线程安全"
+    max_files: 10
+    max_lines_per_file: 200
+    allow_external_deps: true
+    allow_install: true
+    allow_side_effects: true
+    side_effect_scope: "隔离环境（内存 DB / 临时文件）"
+    allow_network: false
+    mock_external: true
+    timeout_seconds: 120
+    concurrent_workers: 10
+    suitable_for:
+      - "竞态条件检测"
+      - "锁机制验证"
+      - "线程/协程安全"
+      - "并发吞吐量"
+
+  load:
+    name: "负载验证"
+    description: "验证性能基线、内存泄漏、大数据量处理"
+    max_files: 10
+    max_lines_per_file: 300
+    allow_external_deps: true
+    allow_install: true
+    allow_side_effects: true
+    side_effect_scope: "隔离环境"
+    allow_network: false
+    mock_external: true
+    timeout_seconds: 300
+    metrics:
+      - "p50/p95/p99 延迟"
+      - "吞吐量 (ops/sec)"
+      - "内存使用峰值"
+      - "GC 频率（如适用）"
+    suitable_for:
+      - "查询性能基线"
+      - "内存泄漏检测"
+      - "大数据量处理"
+      - "序列化/反序列化性能"
+
+# 常见风险模式 → 推荐 Profile 映射
+risk_patterns:
+  - type: "api_availability"
+    pattern: "某个库/API是否可用"
+    profile: single-file
+
+  - type: "compatibility"
+    pattern: "多个库/框架是否能协同工作"
+    profile: integration
+
+  - type: "database_connection"
+    pattern: "数据库连接池/ORM行为"
+    profile: integration
+
+  - type: "race_condition"
+    pattern: "并发写入/读取竞态"
+    profile: concurrency
+
+  - type: "performance"
+    pattern: "查询/序列化/加密性能"
+    profile: load
+
+  - type: "memory_leak"
+    pattern: "长时间运行内存增长"
+    profile: load
+
+  - type: "algorithm_correctness"
+    pattern: "算法逻辑是否正确"
+    profile: single-file

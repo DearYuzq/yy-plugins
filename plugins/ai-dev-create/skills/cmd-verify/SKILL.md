@@ -23,7 +23,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ## 验证流程
 
 ```
-BUILD → TYPE → LINT → TEST → SECURITY → DIFF → CONSTRAINT-MAP
+BUILD → TYPE → LINT → TEST → SECURITY → DIFF → CONSTRAINT-MAP → CONSTRAINT-BEHAVIOR
 ```
 
 ### Phase 1: BUILD
@@ -100,27 +100,7 @@ mvn test jacoco:report
 3. 回退到 TEST 阶段补充测试
 4. 更新重试计数，若超过 3 次则请求用户决策
 
-### Phase 3.5: COVERAGE（覆盖率专项验证）
-
-在 TEST 阶段之后显式执行覆盖率检查：
-
-```
-1. 定位覆盖率报告文件（按优先级）:
-   - coverage/coverage-summary.json (Jest)
-   - coverage/coverage-final.json (nyc/istanbul)
-   - coverage.json (pytest-cov)
-   - target/site/jacoco/jacoco.xml (JaCoCo)
-
-2. 如果报告文件存在:
-   - 解析行/分支/函数覆盖率
-   - 与阈值对比 (lines >= 80%, branches >= 75%, functions >= 80%)
-   - 记录结果到验证报告
-
-3. 如果报告文件不存在:
-   - 标记为 ⚠️ WARN: "未检测到覆盖率报告，无法验证覆盖率阈值"
-   - 建议运行带 --coverage 标志的测试命令
-   - 不阻断验证流程（WARN 而非 FAIL）
-```
+> 覆盖率检查已包含在 Phase 4: TEST 阶段中，不再单独作为 Phase。
 
 ### Phase 5: SECURITY
 
@@ -149,8 +129,10 @@ git diff --name-only
 约束-代码追溯验证。
 
 ```bash
-# 自动执行约束验证脚本
-node plugins/ai-dev-create/scripts/verify-constraints.js .claude/constraints/{feature}/constraint-tree.yaml
+# 由 orchestrator 动态构造路径，使用 ${CLAUDE_PLUGIN_ROOT} 环境变量
+# 如未设置，使用插件根目录自动推断
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
+node "${PLUGIN_ROOT}/scripts/verify-constraints.js" .claude/constraints/{feature}/constraint-tree.yaml
 ```
 
 检查项目：
@@ -158,6 +140,15 @@ node plugins/ai-dev-create/scripts/verify-constraints.js .claude/constraints/{fe
 - 函数签名与约束树中的定义一致
 - 无孤立函数（定义了但约束树中没有的函数）
 - 生成覆盖报告到 `.claude/reports/constraint-coverage.md`
+
+### Phase 8: CONSTRAINT-BEHAVIOR
+
+约束行为验证——确保"函数存在"≠"约束满足"。
+
+1. 从 `constraint-tree.yaml` 的 `tests` 字段提取测试用例名/描述
+2. 在测试文件中 grep 验证每个测试用例实际存在
+3. 运行测试，从测试报告提取 PASS/FAIL 状态
+4. 如果测试 FAIL，标记该约束为"行为未覆盖"
 
 ## 输出格式
 
@@ -170,8 +161,7 @@ node plugins/ai-dev-create/scripts/verify-constraints.js .claude/constraints/{fe
 | Build | ✅ PASS | 无错误 |
 | Type | ✅ PASS | 无类型错误 |
 | Lint | ⚠️ WARN | 3 个警告 |
-| Test | ✅ PASS | 50/50 通过 |
-| **Coverage** | ✅ PASS | Lines: 85% / Branches: 78% / Functions: 82% |
+| Test | ✅ PASS | 50/50 通过，Lines: 85% / Branches: 78% / Functions: 82% |
 | Security | ✅ PASS | 无问题 |
 | Diff | ✅ PASS | 5 个文件变更 |
 | Constraint-Map | ✅ PASS | 12/12 约束已覆盖 |
@@ -239,8 +229,7 @@ Agent 工具参数：
 1. 运行 BUILD 检查
 2. 运行 TYPE 检查
 3. 运行 LINT 检查
-4. 运行 TEST 检查
-5. 运行 COVERAGE 覆盖率验证（检查阈值: lines >= 80%, branches >= 75%, functions >= 80%）
-6. 运行 SECURITY 检查（含依赖漏洞扫描）
-7. 运行 DIFF 审查
-8. 生成验证报告（含覆盖率数据）
+4. 运行 TEST 检查（含覆盖率阈值验证: lines >= 80%, branches >= 75%, functions >= 80%）
+5. 运行 SECURITY 检查（含依赖漏洞扫描）
+6. 运行 DIFF 审查
+7. 生成验证报告

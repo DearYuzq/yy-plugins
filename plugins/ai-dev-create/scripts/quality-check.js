@@ -260,7 +260,201 @@ function main() {
     });
   }
 
+  // 代码复杂度检查（仅对源文件）
+  if (/\.(ts|tsx|js|jsx|py)$/i.test(filePath)) {
+    const complexityIssues = checkCodeComplexity(filePath);
+    if (complexityIssues) {
+      // 复杂度问题在发现问题时才输出，不重复触发
+    }
+  }
+
   pipeStdin();
+}
+
+// --- Code Complexity Checks (zero-dependency, regex-based) ---
+
+function checkCodeComplexity(filePath) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  const lines = content.split('\n');
+  const issues = [];
+
+  // 1. 函数长度检查：统计函数起止行
+  const pyMethodRe = /^\s*(?:async\s+)?def\s+(\w+)\s*\(/;
+  const goMethodRe = /^func\s+(?:\(\s*\w+\s+[\w*]+\s*\)\s+)?(\w+)\s*\(/;
+  const jsFuncRe = /^(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*\(/;
+  const jsArrowRe = /^(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>)/;
+  const jsConstFnRe = /^(?:export\s+)?(?:const|let|var)\s+(\w+)\s*=\s*(\w+)\s*=>/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim().startsWith('//') || line.trim().startsWith('#') || line.trim().startsWith('/*') || line.trim().startsWith('*')) continue;
+
+    let funcName = null;
+    if (filePath.endsWith('.py')) {
+      const m = line.match(pyMethodRe);
+      if (m) funcName = m[1];
+    } else if (filePath.endsWith('.go')) {
+      const m = line.match(goMethodRe);
+      if (m) funcName = m[1];
+    } else {
+      const m = line.match(jsFuncRe) || line.match(jsArrowRe);
+      if (m) funcName = m[1];
+    }
+
+    if (funcName) {
+      // Find function end: count braces (JS/TS/Go) or dedent (Python)
+      let endLine = findFunctionEnd(lines, i, filePath);
+      const funcLength = endLine - i;
+      if (funcLength > 50) {
+        issues.push({
+          file: filePath,
+          line: i + 1,
+          message: `函数 ${funcName} 过长 (${funcLength} 行, 建议 < 50 行)`
+        });
+      }
+    }
+  }
+
+  // 2. 嵌套深度检查
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim().startsWith('//') || line.trim().startsWith('#') || line.trim().startsWith('/*') || line.trim().startsWith('*')) continue;
+    const depth = estimateNestingDepth(line, filePath);
+    if (depth > 4) {
+      issues.push({
+        file: filePath,
+        line: i + 1,
+        message: `嵌套深度过深 (${depth} 层, 建议 < 4 层)`
+      });
+    }
+  }
+
+  // 3. 单文件参数数量检查（函数定义行）
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.trim().startsWith('//') || line.trim().startsWith('#') || line.trim().startsWith('/*')) continue;
+    const paramCount = countParameters(line, filePath);
+    if (paramCount !== null && paramCount > 4) {
+      issues.push({
+        file: filePath,
+        line: i + 1,
+        message: `函数参数过多 (${paramCount} 个, 建议 < 5 个)，考虑使用对象/结构体封装`
+      });
+    }
+  }
+
+  // 4. 分支复杂度估计
+  let branchCount = 0;
+  const branchKeywords = /\b(if|else if|elif|else|case|catch|&&|\|\|)\b/g;
+  for (const line of lines) {
+    const matches = line.match(branchKeywords);
+    if (matches) branchCount += matches.length;
+  }
+  if (branchCount > 20) {
+    issues.push({
+      file: filePath,
+      line: 1,
+      message: `文件分支复杂度较高 (约 ${branchCount} 个分支点)，建议拆分为更小模块`
+    });
+  }
+
+  if (issues.length > 0) {
+    console.log(`[QualityCheck] 代码复杂度提醒:`);
+    issues.forEach(issue => {
+      console.log(`  - ${issue.file}:${issue.line}: ${issue.message}`);
+    });
+  }
+
+  return issues.length > 0 ? issues : null;
+}
+
+function findFunctionEnd(lines, startIdx, filePath) {
+  if (filePath.endsWith('.py')) {
+    // Python: function ends when dedent to same or lesser level as def line
+    const defLine = lines[startIdx];
+    const defIndent = defLine.length - defLine.trimStart().length;
+    for (let i = startIdx + 1; i < lines.length; i++) {
+      const line = lines[i];
+      if (line.trim() === '') continue; // skip blank lines
+      const indent = line.length - line.trimStart().length;
+      if (indent <= defIndent && line.trim()) return i;
+    }
+    return lines.length - 1;
+  } else {
+    // Braced languages: count { }
+    let braceCount = 0;
+    let started = false;
+    for (let i = startIdx; i < lines.length; i++) {
+      const line = lines[i];
+      for (const ch of line) {
+        if (ch === '{') { braceCount++; started = true; }
+        if (ch === '}') braceCount--;
+      }
+      if (started && braceCount <= 0) return i;
+    }
+    return lines.length - 1;
+  }
+}
+
+function estimateNestingDepth(line, filePath) {
+  if (filePath.endsWith('.py')) {
+    const indent = line.length - line.trimStart().length;
+    const spacesPerLevel = 4;
+    // Subtract 1 for the function definition level
+    return Math.floor(indent / spacesPerLevel) - 1;
+  } else {
+    // Braced languages: approximate nesting by counting leading indentation
+    // Most formatters use 2-space or 4-space indentation per nesting level
+    const indent = line.length - line.trimStart().length;
+    if (indent === 0) return -1; // not indented
+    // Assume 2 spaces per nesting level (common for JS/TS)
+    return Math.floor(indent / 2);
+  }
+}
+
+function countParameters(line, filePath) {
+  // Only match function definitions, not function calls
+  // Must have a keyword before the function name (function/const/let/var/def/async etc.)
+  const trimmed = line.trim();
+  let paramMatch = null;
+
+  if (filePath.endsWith('.py')) {
+    // Python: def func_name(params):
+    if (!/^\s*(?:async\s+)?def\s+\w+/.test(line)) return null;
+    paramMatch = line.match(/def\s+\w+\s*\(([^)]*)\)/);
+  } else if (filePath.endsWith('.go')) {
+    // Go: func funcName(params) or func (r Receiver) funcName(params)
+    if (!/^\s*func\s/.test(line)) return null;
+    paramMatch = line.match(/func\s+(?:\([^)]*\)\s+)?\w+\s*\(([^)]*)\)/);
+  } else if (filePath.endsWith('.java')) {
+    // Java: access_modifier ReturnType funcName(params)
+    if (!/^\s*(?:public|private|protected)?\s*(?:static\s+)?/.test(trimmed)) return null;
+    if (/\b(?:if|for|while|switch|catch|return|class|new)\s/.test(trimmed)) return null;
+    paramMatch = trimmed.match(/\w+\s+\w+\s*\(([^)]*)\)/);
+  } else {
+    // JS/TS: function / const foo = / let foo = / var foo = / async function
+    if (!/\b(?:function|const|let|var|async)\s/.test(line)) return null;
+    // Skip lines that are clearly function calls (no keyword before them)
+    if (/^\s*\w+\s*\([^)]*\)\s*[;.,)}\]]/.test(line)) return null;
+
+    // Try: function name(params)
+    paramMatch = line.match(/function\s+\w+\s*\(([^)]*)\)/);
+    // Try: const name = function(params) or const name = (params) =>
+    if (!paramMatch) {
+      paramMatch = line.match(/(?:const|let|var)\s+\w+\s*=\s*(?:function\s*|\([^)]*\)\s*=>|\w+\s*=>)/);
+      if (paramMatch) {
+        const parenMatch = line.match(/\(([^)]+)\)\s*(?:=>|{)/);
+        if (parenMatch) paramMatch = parenMatch;
+        else paramMatch = null;
+      }
+    }
+  }
+
+  if (paramMatch && paramMatch[1] !== undefined && paramMatch[1].trim()) {
+    const params = paramMatch[1].split(',').map(p => p.trim()).filter(p => p && p !== 'self' && p !== 'this');
+    return params.length;
+  }
+  return null;
 }
 
 function pipeStdin() {

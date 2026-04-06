@@ -27,7 +27,7 @@ agent: orchestrator
 - 分散发散：Critique (raw) → Diverger
 - 轻量安全检查：Security Teamer (mode=light)
 - 用户确认点
-- 约束提取 → SPEC → PLAN → TEST → IMPL（含自检 REVIEW）→ VERIFY
+- 约束提取 → SPEC → PLAN → TEST → IMPL → 独立 REVIEW → VERIFY
 
 ## 成功标准
 - 需求澄清完成

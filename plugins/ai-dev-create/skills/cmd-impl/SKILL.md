@@ -145,10 +145,13 @@ function addItem(list, item) {
 
 ### 调用的 Agent
 
-| Agent | 调用时机 | 输入 | 输出 |
-|-------|----------|------|------|
-| tester | 使用 --tdd 模式时 | 计划文档 | 测试文件 |
-| implementer | 实现代码时 | 计划 + 测试文件 | 生产代码 |
+> Agent 工具调用由 Orchestrator 统一发起（见 orchestrator.md TEST → IMPL 闭环）。
+> 本 Skill 仅在通过 --tdd 标志独立运行时，自行调用 tester subagent。
+
+| Agent | 调用时机 | 说明 |
+|-------|----------|------|
+| tester | 仅 --tdd 模式下 | 编写测试用例 |
+| 自身 (implementer) | 实现代码时 | 本 Skill 的 host Agent 即为 implementer |
 
 ### 调用方式
 

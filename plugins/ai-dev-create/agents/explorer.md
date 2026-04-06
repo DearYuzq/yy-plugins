@@ -29,19 +29,30 @@ Completer ──▶ EXPLORER ──▶ Security Teamer
 
 ## POC 约束规则
 
-POC 代码必须遵守以下约束，**违反任一约束的 POC 视为无效**：
+POC 代码的约束取决于所选 Profile，**违反约束的 POC 视为无效**。
 
-| 约束 | 规则 |
-|------|------|
-| **行数上限** | 单个 POC 文件不超过 100 行 |
-| **不修改生产代码** | POC 代码只能写入 `.claude/clarifications/{feature}-{session_id}/poc/` 目录 |
-| **单一技术验证** | 每个 POC 只验证一个技术风险点，不做集成测试 |
-| **无外部依赖安装** | 使用项目已有依赖或 Node.js/Python 标准库，不执行 `npm install`/`pip install` |
-| **超时限制** | 每个 POC 执行不超过 30 秒 |
-| **无副作用** | POC 不修改数据库、不写入生产目录、不调用外部 API |
-| **可丢弃** | POC 代码开发完即丢弃，不进入生产代码库 |
+| 约束 | single-file (默认) | integration (集成) | concurrency (并发) | load (负载) |
+|------|:---:|:---:|:---:|:---:|
+| 文件数量 | 1 | 不限 | 不限 | 不限 |
+| 行数上限 | < 100 行 | < 300 行 | 不限 | 不限 |
+| 外部依赖 | ❌ 不允许 | ✅ 允许 | ✅ 允许 | ✅ 允许 |
+| 安装依赖 | ❌ | ✅ (npm install/pip install) | ✅ | ✅ |
+| 副作用（DB/文件）| ❌ | ✅ (隔离环境) | ✅ (隔离环境) | ✅ (隔离环境) |
+| 超时 | 30 秒 | 60 秒 | 120 秒 | 300 秒 |
+| 网络请求 | ❌ | ❌ (mock) | ❌ (mock) | ❌ (mock) |
 
-**例外**：如果技术风险无法在 100 行内验证，Explorer 必须在报告中说明原因，并请求用户决策是否需要深入验证。
+**Profile 选择前验证**：
+1. 确认所选 Profile 存在于 `templates/poc-profiles.yaml` 中
+2. 确认 Profile 的所有必填字段均已定义
+3. 如果文件不存在或格式错误，降级为 single-file 模式并记录警告
+
+**选择规则**：
+- **single-file**（默认）：验证简单 API 可用性、语法兼容性、基础算法可行性
+- **integration**：验证库之间的兼容性、框架集成、数据库连接
+- **concurrency**：验证竞态条件、锁机制、线程安全、并发吞吐量
+- **load**：验证性能基线、内存泄漏、大数据量处理
+
+**例外**：如果单一 Profile 无法验证技术风险，Explorer 必须在报告中说明原因，并请求用户决策。
 
 ---
 
@@ -144,6 +155,16 @@ async function verify_{poc_id}() {
 // 执行验证
 verify_{poc_id}();
 ```
+
+**多语言 POC 模板**（根据项目语言选择使用）：
+
+- JavaScript/TypeScript: 参考 `templates/poc-javascript.md`
+- Python: 参考 `templates/poc-python.md`
+- Java/Spring Boot: 参考 `templates/poc-java.md`
+- Go: 参考 `templates/poc-go.md`
+- Rust: 参考 `templates/poc-rust.md`
+
+根据检测到的项目语言，仅加载对应的 POC 模板，避免加载所有模板消耗上下文窗口。
 
 ### 方法4: 结果判定
 
@@ -503,7 +524,29 @@ node .claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js
 
 ---
 
-## 10. 传递给下一阶段
+## 10. 技术可行性置信度
+
+**置信度定义**（基于 POC 验证深度）：
+
+| 级别 | 条件 |
+|------|------|
+| **High** | 使用 integration/并发 profile 验证了真实依赖，覆盖边界条件 |
+| **Medium** | 仅使用 single-file profile 验证了基础可行性 |
+| **Low** | POC 受限于约束无法覆盖关键风险，或 POC 执行失败 |
+
+**置信度评估**：
+
+```
+- 综合可行性: High/Medium/Low
+- 置信度理由: {为什么是该级别}
+- 风险提示: {如果置信度不是 High，需要在 SPEC 中明确标注}
+```
+
+> ⚠️ **门控规则**：当综合置信度为 Low 时，必须使用 AskUserQuestion 请求用户决策后才能进入 SPEC 阶段。
+
+---
+
+## 11. 传递给下一阶段
 
 传递给 Security Teamer Agent：
 
@@ -559,6 +602,37 @@ Security Teamer
 
 | 情况 | 动作 |
 |------|------|
-| POC 执行超时 | 增加超时时间或简化 POC |
-| POC 环境问题 | 提供环境配置指导 |
-| 大量 POC 失败 | 重新评估技术选型 |
+| POC 执行超时 | 增加超时时间、简化 POC、或切换到更简单的 Profile |
+| POC 环境问题 | 提供环境配置指导，或降级为 single-file Profile |
+| 大量 POC 失败 | 重新评估技术选型，必要时请求用户决策 |
+| 置信度 Low | 无法进入 SPEC 阶段，需补充验证或修改技术方案 |
+
+---
+
+## POC 置信度门控
+
+POC 验证完成后，根据置信度级别决定后续动作：
+
+| 置信度 | 后续动作 |
+|--------|----------|
+| **High** | 直接进入下一阶段，技术方案可信 |
+| **Medium** | 可在 SPEC 中标注 "技术方案基于有限验证"，继续流程 |
+| **Low** | 必须使用 AskUserQuestion 告知用户风险，获得确认后才能继续 |
+
+---
+
+## POC 代码管理
+
+**生成规则**:
+- POC 代码输出到 `.claude/clarifications/{feature}-{session_id}/poc/`
+- 每个 POC 文件命名: `poc-{risk-id}-{language}.{ext}`
+
+**清理策略**:
+- POC 代码的归档由 orchestrator 统一管理。
+- 当 Convergent Summary 生成后，orchestrator 自动将 `poc/` 归档到 `.claude/clarifications/{feature}-{session_id}/.poc-archive/`。
+- 详见 `agents/orchestrator.md` "POC 代码自动归档" 章节。
+- Explorer Agent 不主动触发 POC 清理操作。
+
+**POC 约束（所有 Profile 共有）**:
+- 只验证一个风险点
+- 不修改生产代码
