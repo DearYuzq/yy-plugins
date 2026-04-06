@@ -45,7 +45,7 @@ function simpleYamlParse(text) {
     if (!str || str === 'null' || str === '~') return null;
     if (str === 'true') return true;
     if (str === 'false') return false;
-    if (/^-?\d+$/.test(str)) return parseInt(str, 10);
+    if (/^-?\d+$/.test(str)) { const n = parseInt(str, 10); return Number.isNaN(n) ? str : n; }
     if (/^-?\d+\.\d+$/.test(str)) return parseFloat(str);
     if (str.startsWith('"') && str.endsWith('"')) {
       try { return JSON.parse(str); } catch { return str.slice(1, -1); }
@@ -96,7 +96,8 @@ function simpleYamlParse(text) {
           if (kvMatch) {
             const obj = {};
             const key = kvMatch[1].trim();
-            const val = kvMatch[2].trim();
+            // signature 字段包含冒号（如 TypeScript 类型签名），需要取剩余全部内容
+            const val = key === 'signature' ? itemStr.slice(key.length + 2).trim() : kvMatch[2].trim();
 
             if (!val) {
               // 嵌套: 收集更深的子行

@@ -19,7 +19,8 @@ const RETRY_LIMITS = {
   PLAN: 2,
   TEST: 3,
   IMPL: 5,
-  REVIEW: 2
+  REVIEW: 2,
+  VERIFY: 2
 };
 
 function getSessionDir() {
@@ -84,6 +85,11 @@ function detectCurrentPhase() {
   if (!hasPlan) return 'PLAN';
   if (!hasTests) return 'TEST';
   if (!hasReview) return 'REVIEW';
+
+  // review 已存在，检查是否有验证报告
+  const reportsDir = path.join(cwd, '.claude', 'reports');
+  const hasVerifyReport = fs.existsSync(reportsDir) && findFiles(reportsDir, /\.md$/).length > 0;
+  if (hasVerifyReport) return 'VERIFY';
 
   return 'IMPL';
 }

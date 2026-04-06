@@ -216,3 +216,19 @@ grep -rn 'sk-\|AKIA\|aws_secret\|password.*=.*["'"'"']' --include="*.ts" --inclu
 | 发现无法解决的 CRITICAL 漏洞 | 标记风险，使用 AskUserQuestion 请求用户决策 |
 | 安全评分 < 5/10（修复前） | 必须设计缓解方案后才能继续 |
 | 防御成本过高 | 列出替代方案或接受风险 |
+
+## 收敛摘要生成（orchestrator 指示执行）
+
+完成安全报告后，额外生成两项产物：
+
+### 1. 收敛摘要 (convergent-summary.md)
+
+读取 05-completer-report.md、06-explorer-report.md、07-security-report.md，
+提取功能需求清单、非功能需求、安全需求、已验证/已否决技术方案、架构决策。
+写入 `.claude/summaries/convergent-summary.md`（< 800 行）。
+
+### 2. 最终需求文档 (08-final-requirements.md)
+
+仅 /sdd-full 流程执行。读取 01-07 全部报告，按 `templates/final-requirements-template.md` 格式
+整合执行摘要、最终需求树、功能/非功能/安全/约束需求、决策记录、风险清单。
+写入 `.claude/clarifications/{feature}-{session_id}/08-final-requirements.md`。

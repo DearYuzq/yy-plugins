@@ -1,6 +1,6 @@
 {
   "name": "ai-dev-create",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "约束求解驱动的多阶段开发插件：分散发散→收敛验证→约束提取→TDD闭环→自我进化",
   "author": {
     "name": "yuzq",
@@ -25,6 +25,7 @@
     "lessons-learned"
   ],
   "mcpServers": "./.mcp.json",
+  "hooks": "./hooks/hooks.json",
   "userConfig": {
     "defaultFlow": {
       "type": "string",

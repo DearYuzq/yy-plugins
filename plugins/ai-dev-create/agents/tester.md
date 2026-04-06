@@ -20,6 +20,10 @@ tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 - 验收标准列表
 - 边界情况定义
 
+来自约束提取阶段：
+- 约束树文档（`.claude/constraints/{feature}/constraint-tree.yaml`）
+- 函数签名定义与测试用例映射（用于指导测试用例编写）
+
 来自 IMPL 阶段（重试时）：
 - 测试失败报告
 - 需要调整的测试用例

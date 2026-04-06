@@ -188,11 +188,16 @@ node plugins/ai-dev-create/scripts/verify-constraints.js .claude/constraints/{fe
 4. **Test 失败**：分析失败原因，修复代码或测试
 5. **Security 失败**：CRITICAL 立即修复
 
+## 前置条件
+
+> 注意：独立 REVIEW 阶段应在 VERIFY 之前完成（见 orchestrator.md 步骤 5）。
+> 如尚未执行 REVIEW，请先运行 `ai-dev-create:review`。
+
 ## 下一步
 
 验证通过后：
-- `ai-dev-create:review` - 代码审查
 - 创建 PR
+- 如 VERIFY 失败，根据失败类型回退到对应阶段（见 orchestrator.md 失败恢复表）
 
 ---
 

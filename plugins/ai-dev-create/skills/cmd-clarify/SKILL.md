@@ -92,7 +92,7 @@ agent: orchestrator
 ├── 05-completer-report.md
 ├── 06-explorer-report.md
 ├── 07-security-report.md
-├── 08-final-requirements.md
+├── 08-final-requirements.md（仅 /sdd-full）
 ├── poc/
 └── session.json
 ```

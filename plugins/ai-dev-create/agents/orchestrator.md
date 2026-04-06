@@ -116,6 +116,7 @@ ELSE:
 | E: Completer | ❌ | ❌ | ✅ |
 | F: Explorer (POC) | ❌ | ❌ | ✅ |
 | G: Security Teamer | ❌ | ⚡ 轻量 | ✅ (full) |
+| **H: 最终需求汇总** | ❌ | ❌ | ✅ |
 | **Constraint Extractor** | inline | ✅ | ✅ |
 | SPEC | ❌ | ✅ | ✅ |
 | PLAN | ❌ | ✅ | ✅ |
@@ -226,8 +227,8 @@ ELSE:
 | Agent | `ai-dev-create:security-teamer` (mode=full / mode=light) |
 | 方法 | 红方：SQLi/XSS/越权/业务逻辑攻击；蓝方：防御设计+优先级排序 |
 | 输入 | POC 结果 → 攻击报告 |
-| 输出 | `07-security-report.md` |
-| 完成条件 | CRITICAL 漏洞已设计缓解方案 |
+| 输出 | `07-security-report.md` + `.claude/summaries/convergent-summary.md` |
+| 完成条件 | CRITICAL 漏洞已设计缓解方案，收敛摘要已生成 |
 
 **Full Mode**（/sdd-full）：完整攻击面分析 + 四向量攻击 + 完整防御方案。
 **Light Mode**（/sdd-standard）：轻量安全检查——只检查明显 OWASP 漏洞（SQL注入、XSS、越权、硬编码凭据），设计核心防御方案。
@@ -245,6 +246,24 @@ ELSE:
 **SPEC 和 PLAN 确认门控**：
 - SPEC 生成后必须 AskUserQuestion 确认功能规范是否准确
 - PLAN 生成后必须 AskUserQuestion 确认实现计划范围和风险评估
+
+### H: 最终需求汇总
+
+| 项目 | 详情 |
+|------|------|
+| Agent | orchestrator 直接执行 |
+| 输入 | 01-07 全部报告（分散发散 + 收敛阶段） |
+| 输出 | `08-final-requirements.md`（使用 `templates/final-requirements-template.md`） |
+| 完成条件 | 所有阶段的决策、需求、风险已整合为一 |
+
+将 CLARIFY 各阶段精华整合为最终需求文档。仅 /sdd-full 流程执行。内容包括：
+- 执行摘要
+- 最终需求树（Must/Should 优先级分布）
+- 功能/非功能/安全/约束需求清单
+- 已记录的决策和理由
+- 风险清单和缓解措施
+
+整合完成后 AskUserQuestion 让用户确认。
 
 ---
 
@@ -306,7 +325,16 @@ FUNCTION convergent_phase_summary():
 
 提取：功能需求清单、非功能需求、安全需求清单、已验证/已否决技术方案、架构决策。
 
-### 执行阶段上下文规则
+### 执行分配
+
+| 摘要函数 | 执行者 | 触发时机 | 输出路径 |
+|----------|--------|----------|----------|
+| `divergent_phase_summary()` | Diverger | Phase 1D 完成后 | `.claude/summaries/divergent-summary.md` |
+| `convergent_phase_summary()` | Security Teamer | Phase 2C 完成后 | `.claude/summaries/convergent-summary.md` |
+
+两个摘要均由 orchestrator 指示对应 agent 生成。SPEC/PLAN 阶段仅读取摘要文件，不读取原始中间报告。若摘要不存在，orchestrator 应拒绝进入 SPEC 阶段并提示生成。
+
+### H: 最终需求汇总
 
 - SPEC/PLAN 仅读取 `convergent-summary.md`（不读取中间报告）
 - Constraint Extractor 读取原始报告
@@ -318,7 +346,7 @@ FUNCTION convergent_phase_summary():
 
 | # | 阶段 | Agent | 关键输入 | 关键输出 | 完成条件 |
 |---|------|-------|----------|----------|----------|
-| 1 | SPEC | `ai-dev-create:planner` (mode=spec) | 最终需求文档 | `.claude/specs/{f}.md` | **AskUserQuestion 确认** |
+| 1 | SPEC | `ai-dev-create:planner` (mode=spec) | convergent-summary.md | `.claude/specs/{f}.md` | **AskUserQuestion 确认** |
 | 2 | PLAN | `ai-dev-create:planner` (mode=plan) | SPEC + 代码库 | `.claude/plans/{f}.md` | **AskUserQuestion 确认** |
 | 3 | TEST | `ai-dev-create:tester` | PLAN + 约束树 | 测试文件 | RED 状态 |
 | 4 | IMPL | `ai-dev-create:implementer` | TEST + PLAN + 约束树 | 生产代码 | GREEN 状态 + 自检通过 |

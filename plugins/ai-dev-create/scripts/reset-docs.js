@@ -9,17 +9,17 @@ const path = require('path');
 const os = require('os');
 const crypto = require('crypto');
 
-// 生成的文档目录
-const DOC_DIRS = ['clarifications', 'specs', 'plans', 'tests', 'reviews'];
-
-// 文件匹配模式
-const FILE_PATTERNS = {
-  clarifications: /\.md$/,
-  specs: /\.md$/,
-  plans: /\.md$/,
-  tests: /\.(test|spec)\.(ts|js|py|java|go|rs)$/,
-  reviews: /\.md$/
-};
+// 生成的文档目录（均位于 .claude/ 下）
+const DOC_DIRS = [
+  { path: '.claude/clarifications', pattern: /\.md$/ },
+  { path: '.claude/specs',          pattern: /\.md$/ },
+  { path: '.claude/plans',          pattern: /\.md$/ },
+  { path: '.claude/constraints',    pattern: /\.yaml$/ },
+  { path: '.claude/tests',          pattern: /\.(test|spec)\.(ts|js|py|java|go|rs)$/ },
+  { path: '.claude/reviews',        pattern: /\.md$/ },
+  { path: '.claude/summaries',      pattern: /\.md$/ },
+  { path: '.claude/reports',        pattern: /\.(md|json)$/ }
+];
 
 /**
  * 获取会话目录
@@ -36,33 +36,44 @@ function getSessionDir() {
 }
 
 /**
- * 删除目录中的匹配文件
+ * 删除目录中的匹配文件（递归）
  */
-function deleteFilesInDir(dir, pattern) {
+function deleteFilesInDir(basePath, { path: dirName, pattern }) {
   const deleted = [];
   const errors = [];
+  const dir = path.join(basePath, dirName);
 
   if (!fs.existsSync(dir)) {
     return { deleted, errors };
   }
 
   try {
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-      const filePath = path.join(dir, file);
+    const entries = fs.readdirSync(dir);
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry);
       try {
-        const stat = fs.statSync(filePath);
-        if (stat.isFile() && pattern.test(file)) {
-          fs.unlinkSync(filePath);
-          deleted.push(filePath);
+        const stat = fs.statSync(fullPath);
+        if (stat.isFile() && pattern.test(entry)) {
+          fs.unlinkSync(fullPath);
+          deleted.push(fullPath);
+        } else if (stat.isDirectory()) {
+          // 递归清理子目录
+          const subResult = deleteFilesInDir(dir, { path: entry, pattern });
+          deleted.push(...subResult.deleted);
+          errors.push(...subResult.errors);
+          // 如果子目录空了，删除它
+          try {
+            if (fs.readdirSync(fullPath).length === 0) {
+              fs.rmdirSync(fullPath);
+            }
+          } catch (e) { /* 忽略 */ }
         }
       } catch (err) {
-        errors.push({ file: filePath, error: err.message });
+        errors.push({ file: fullPath, error: err.message });
       }
     }
     // 如果目录为空，删除目录
-    const remaining = fs.readdirSync(dir);
-    if (remaining.length === 0) {
+    if (fs.readdirSync(dir).length === 0) {
       fs.rmdirSync(dir);
     }
   } catch (err) {
@@ -76,18 +87,13 @@ function deleteFilesInDir(dir, pattern) {
  * 删除所有生成的文档
  */
 function resetDocs() {
-  const results = {
-    deleted: [],
-    errors: []
-  };
+  const results = { deleted: [], errors: [] };
+  const basePath = process.cwd();
 
-  console.log('[ResetDocs] 开始删除生成的文档...');
+  console.log('[ResetDocs] 开始删除 .claude/ 下生成的文档...');
 
-  for (const dirName of DOC_DIRS) {
-    const dir = path.join(process.cwd(), dirName);
-    const pattern = FILE_PATTERNS[dirName];
-    const { deleted, errors } = deleteFilesInDir(dir, pattern);
-
+  for (const dirConfig of DOC_DIRS) {
+    const { deleted, errors } = deleteFilesInDir(basePath, dirConfig);
     results.deleted.push(...deleted);
     results.errors.push(...errors);
   }
@@ -99,10 +105,7 @@ function resetDocs() {
  * 删除会话状态文件
  */
 function resetSession() {
-  const results = {
-    deleted: [],
-    errors: []
-  };
+  const results = { deleted: [], errors: [] };
 
   console.log('[ResetSession] 开始删除会话状态...');
 
