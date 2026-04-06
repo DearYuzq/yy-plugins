@@ -13,7 +13,7 @@ tools: Read, Write, Edit, Bash, WebSearch, AskUserQuestion
 ```
 CLARIFY 阶段 - 第六步（收敛阶段第二步）
 =========================================
-Completer ──▶ EXPLORER ──▶ Red-Teamer
+Completer ──▶ EXPLORER ──▶ Security Teamer
                   │
                   ▼
               探测报告
@@ -23,7 +23,7 @@ Completer ──▶ EXPLORER ──▶ Red-Teamer
 
 **与上下游关系**：
 - 上游：接收 Completer 输出（补全后需求）
-- 下游：输出给 Red-Teamer Agent
+- 下游：输出给 Security Teamer Agent
 
 **核心职责**：通过 POC (Proof of Concept) 验证技术风险，行不通的方案被丢弃或修改。
 
@@ -505,7 +505,7 @@ node .claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js
 
 ## 10. 传递给下一阶段
 
-传递给 Red-Teamer Agent：
+传递给 Security Teamer Agent：
 
 ```yaml
 explorer_output:
@@ -532,11 +532,11 @@ Explorer
     │
     │ 探测报告 + POC代码
     ▼
-Red-Teamer
+Security Teamer
 ```
 
 - **上游**：Completer Agent
-- **下游**：Red-Teamer Agent
+- **下游**：Security Teamer Agent
 - **协作**：使用 Bash 执行 POC 代码
 
 ---

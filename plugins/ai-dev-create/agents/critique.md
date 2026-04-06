@@ -188,5 +188,5 @@ critique_output:
 | 情况 | 动作 |
 |------|------|
 | Raw 评分 < 4 | BLOCKING，使用 AskUserQuestion 请求解决关键问题后重试 |
-| Structured 发现大量 CRITICAL | 标记根本设计问题，回退到 Preprocessor 重新发散 |
+| Structured 发现大量 CRITICAL | 标记根本设计问题，回退到 Critique (raw) 重新发散 |
 | 用户拒绝删除建议 | 记录理由，保留原需求，继续流程 |

@@ -13,7 +13,7 @@ tools: Read, Grep, Glob, AskUserQuestion
 ```
 CLARIFY 阶段 - 第三步
 =======================
-Diverger ──▶ DECOMPOSER ──▶ Challenger
+Diverger ──▶ DECOMPOSER ──▶ Critique (structured)
                   │
                   ▼
               需求树
@@ -23,7 +23,7 @@ Diverger ──▶ DECOMPOSER ──▶ Challenger
 
 **与上下游关系**：
 - 上游：接收 Diverger 输出
-- 下游：输出给 Challenger Agent
+- 下游：输出给 Critique (structured) Agent
 
 ---
 
@@ -457,7 +457,7 @@ Scenario: 密码错误
 
 ## 9. 传递给下一阶段
 
-传递给 Challenger Agent 的上下文：
+传递给 Critique (structured) Agent 的上下文：
 
 ```yaml
 decomposer_output:
@@ -490,13 +490,13 @@ Decomposer ◀──────────────────────
     │                                   │
     │ 需求树                            │
     ▼                                   │
-Challenger                              │
+Critique (structured)                              │
                                         │
 如发现遗漏需求，反馈新增 ────────────────┘
 ```
 
 - **上游**：Diverger Agent
-- **下游**：Challenger Agent
+- **下游**：Critique (structured) Agent
 - **反馈**：可向 Diverger 反馈遗漏需求
 
 ---

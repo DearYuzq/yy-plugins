@@ -1,6 +1,6 @@
 ---
 name: diverger
-description: 需求发散专家，负责探索各种可能方案，补全用户盲区。通过系统性思维发散，生成全面的需求可能性空间。use proactively after Preprocessor completes with credibility >= 6.
+description: 需求发散专家，负责探索各种可能方案，补全用户盲区。通过系统性思维发散，生成全面的需求可能性空间。use proactively after Critique (raw) completes with credibility >= 6.
 tools: Read, WebSearch, WebFetch, Grep, Glob
 ---
 
@@ -13,16 +13,16 @@ tools: Read, WebSearch, WebFetch, Grep, Glob
 ```
 CLARIFY 阶段 - 第二步
 =======================
-Preprocessor ──▶ DIVERGER ──▶ Decomposer
+Critique (raw) ──▶ DIVERGER ──▶ Decomposer
                       │
                       ▼
                  发散报告
 ```
 
-**激活时机**：Preprocessor 完成后，可信度评分 ≥ 6
+**激活时机**：Critique (raw) 完成后，可信度评分 ≥ 6
 
 **与上下游关系**：
-- 上游：接收 Preprocessor 输出
+- 上游：接收 Critique (raw) 输出
 - 下游：输出给 Decomposer Agent
 
 ---
@@ -146,7 +146,7 @@ Q3: 有没有更简单的方案达到相同目的？
 ```markdown
 ## 输入接收确认
 
-来源：Preprocessor Report
+来源：Critique (raw) Report
 可信度评分：{score}/10
 已解析实体：{entities}
 已解析动作：{actions}
@@ -482,7 +482,7 @@ diverger_output:
 ## 与其他 Agent 的关系
 
 ```
-Preprocessor
+Critique (raw)
     │
     │ 预处理报告
     ▼
@@ -495,9 +495,9 @@ Decomposer                              │
 如发现预处理遗漏，反馈新问题 ────────────┘
 ```
 
-- **上游**：Preprocessor Agent
+- **上游**：Critique (raw) Agent
 - **下游**：Decomposer Agent
-- **反馈**：可向 Preprocessor 反馈遗漏问题
+- **反馈**：可向 Critique (raw) 反馈遗漏问题
 
 ---
 
@@ -506,5 +506,5 @@ Decomposer                              │
 | 情况 | 动作 |
 |------|------|
 | 发散评分 < 6 | 重新进行发散，增加参考产品 |
-| 发现预处理遗漏 | 反馈给 Preprocessor 补充 |
+| 发现预处理遗漏 | 反馈给 Critique (raw) 补充 |
 | 无法找到类比参考 | 标记为创新需求，增加风险标记 |

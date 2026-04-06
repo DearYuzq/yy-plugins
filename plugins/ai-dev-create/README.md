@@ -14,8 +14,8 @@
 
 | 入口 | 阶段 | 适用 | 管道 |
 |------|------|------|------|
-| `/tdd-quick` | Preprocessor(quick)→TEST→IMPL→REVIEW→VERIFY | Bug修复、简单功能 | 最短路径 |
-| `/sdd-standard` | Preprocessor→Diverger→约束提取→SPEC→PLAN→TEST→IMPL→REVIEW→VERIFY | 中等复杂度新功能 | 标准路径 |
+| `/tdd-quick` | Critique(quick)→TEST→IMPL→REVIEW→VERIFY | Bug修复、简单功能 | 最短路径 |
+| `/sdd-standard` | Critique(raw)→Diverger→约束提取→SPEC→PLAN→TEST→IMPL→REVIEW→VERIFY | 中等复杂度新功能 | 标准路径 |
 | `/sdd-full` | 全部分散+收敛+红蓝对抗+约束提取+SPEC→PLAN→TEST→IMPL→REVIEW→VERIFY | 跨系统、安全敏感 | 完整路径 |
 
 ```
@@ -35,10 +35,10 @@
 
 | Agent | 职责 |
 |-------|------|
-| **Preprocessor** | 需求即假设 + 需求非真理 — 质疑一切 |
+| **Critique (raw)** | 需求即假设 + 需求非真理 — 质疑一切 |
 | **Diverger** | MECE分解、类比启发、What-If 分析，补全盲区 |
 | **Decomposer** *(full)* | 构建需求树、MoSCoW 优先级、依赖图 |
-| **Challenger** *(full)* | SMART 验证、正交过滤、剔除不合理需求 |
+| **Critique (structured)** *(full)* | SMART 验证、正交过滤、剔除不合理需求 |
 
 **用户确认点** → 进入收敛
 
@@ -48,7 +48,7 @@
 |-------|------|
 | **Completer** *(full)* | 端到端用户旅程检查，需求链补全 |
 | **Explorer** *(full)* | POC 生成 → Bash 执行 → 不可行方案丢弃 |
-| **Red/Blue-Teamer** *(full)* | 安全攻击与防御设计，边界问题识别 |
+| **Security Teamer** *(full)* | 安全攻击与防御设计，边界问题识别 |
 
 **最终评审** → 进入约束提取
 
@@ -78,7 +78,7 @@ Constraint Tree → SPEC → PLAN → TEST (RED) → IMPL (GREEN) → REVIEW →
                                               BUILD → TYPE → LINT →
                                               TEST → SECURITY → DIFF
                                                       │
-                                              失败？ → 回退 Preprocessor
+                                              失败？ → 回退 Critique (raw)
 ```
 
 ## 独立命令

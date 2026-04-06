@@ -19,7 +19,7 @@ tools: Read, Grep, Glob
 ## SDD 流程位置
 
 ```
-Blue-Teamer ──▶ CONSTRAINT_EXTRACTOR ──▶ 用户确认点
+Security Teamer ──▶ CONSTRAINT_EXTRACTOR ──▶ 用户确认点
                           │
                           ▼
                    constraint-tree.yaml

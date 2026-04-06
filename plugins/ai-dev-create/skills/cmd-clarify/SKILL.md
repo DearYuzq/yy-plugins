@@ -1,6 +1,7 @@
 ---
 name: clarify
 description: 启动多阶段需求澄清会话，通过批判→发散→分解→结构化质疑→收敛流程确保需求完整性和可行性。
+agent: orchestrator
 ---
 
 # /ai-dev-create:clarify - 多阶段需求澄清
@@ -35,6 +36,8 @@ description: 启动多阶段需求澄清会话，通过批判→发散→分解�
             │
        最终需求文档
 ```
+
+> 注：本流程以 `agents/orchestrator.md` 中的管道定义为权威来源。
 
 ### 阶段详解
 

@@ -4,7 +4,7 @@ description: 运行验证循环，确保代码质量。
 disable-model-invocation: true
 argument-hint: [--quick] [--fix]
 context: fork
-agent: general-purpose
+agent: orchestrator
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ---
 
