@@ -134,8 +134,7 @@ function addItem(list, item) {
 
 ## 下一步
 
-实现完成后，运行：
-- `ai-dev-create:review` - 代码审查
+实现完成后（自动执行自检 REVIEW），运行：
 - `ai-dev-create:verify` - 运行验证循环
 
 ---

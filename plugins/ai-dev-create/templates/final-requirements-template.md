@@ -12,13 +12,13 @@
 
 | 阶段 | Agent | 结果 |
 |------|-------|------|
-| 预处理 | preprocessor | 可信度评分 {score}/10 |
+| 批判 (raw) | critique | 可信度评分 {score}/10 |
 | 发散 | diverger | 发现 {count} 个潜在需求点 |
 | 拆解 | decomposer | 构建 {count} 个需求节点 |
-| 挑战 | challenger | 剔除 {count} 个不合理需求 |
+| 批判 (structured) | critique | 剔除 {count} 个不合理需求 |
 | 补全 | completer | 新增 {count} 个缺失需求 |
 | 探测 | explorer | 验证 {count} 个技术风险 |
-| 红蓝对抗 | red-teamer + blue-teamer | 解决 {count} 个安全问题 |
+| 红蓝对抗 | security-teamer | 解决 {count} 个安全问题 |
 
 ---
 
@@ -142,14 +142,13 @@ CONSTRAINTS
 
 ## 相关文档
 
-- 预处理报告：`.claude/clarifications/{session_id}/01-preprocessor-report.md`
+- 批判报告 (raw)：`.claude/clarifications/{session_id}/01-critique-raw.md`
 - 发散报告：`.claude/clarifications/{session_id}/02-diverger-report.md`
 - 需求树：`.claude/clarifications/{session_id}/03-requirement-tree.md`
-- 挑战报告：`.claude/clarifications/{session_id}/04-challenger-report.md`
+- 批判报告 (structured)：`.claude/clarifications/{session_id}/04-critique-structured.md`
 - 补全报告：`.claude/clarifications/{session_id}/05-completer-report.md`
 - 探测报告：`.claude/clarifications/{session_id}/06-explorer-report.md`
-- 攻击报告：`.claude/clarifications/{session_id}/07-red-team-report.md`
-- 防御报告：`.claude/clarifications/{session_id}/08-blue-team-report.md`
+- 安全报告：`.claude/clarifications/{session_id}/07-security-report.md`
 - POC 代码：`.claude/clarifications/{session_id}/poc/`
 
 ---

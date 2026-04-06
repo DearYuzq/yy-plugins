@@ -1,0 +1,47 @@
+# 约束树模板
+# 用法: Constraint Extractor Agent 生成此格式的约束树
+# 路径: .claude/constraints/{feature}/constraint-tree.yaml
+
+constraint_tree:
+  metadata:
+    feature_name: "{功能名称}"
+    date: "{timestamp}"
+    source_reports: ["01-critique-raw","02-diverger","03-requirement-tree","04-critique-structured","05-completer","06-explorer","07-security"]
+
+  requirements:
+    - id: REQ-001
+      description: "{需求描述}"
+      source: "{来源: 用户原始需求 / 发散推导 / 补全推导}"
+      constraints:
+        - id: C-001
+          type: functional | non-functional | security | data
+          description: "{约束描述}"
+          derivation: "{推导理由}"
+
+  features:
+    - id: FEAT-001
+      name: "{功能名称}"
+      supports: ["REQ-001"]
+      modules:
+        - id: MOD-001
+          name: "{模块名称}"
+          path: "{预估文件路径}"
+          functions:
+            - signature: "{函数签名}"
+              constraint_ids: ["C-001"]
+              tests:
+                - "{测试用例描述}"
+
+  constraints_summary:
+    total: 0
+    by_type:
+      functional: 0
+      non-functional: 0
+      security: 0
+      data: 0
+
+  coverage:
+    requirements_with_constraints: "0/0"
+    functions_with_constraints: "0/0"
+    orphan_constraints: []
+    orphan_functions: []

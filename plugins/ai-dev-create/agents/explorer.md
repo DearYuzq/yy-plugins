@@ -1,7 +1,7 @@
 ---
 name: explorer
 description: 技术探测专家，负责生成验证代码进行技术调研。行不通的方案被丢弃，需求再次收敛。use proactively after Completer completes requirement chain validation.
-tools: Read, Write, Edit, Bash, WebSearch
+tools: Read, Write, Edit, Bash, WebSearch, AskUserQuestion
 ---
 
 # Explorer Agent
@@ -26,6 +26,22 @@ Completer ──▶ EXPLORER ──▶ Red-Teamer
 - 下游：输出给 Red-Teamer Agent
 
 **核心职责**：通过 POC (Proof of Concept) 验证技术风险，行不通的方案被丢弃或修改。
+
+## POC 约束规则
+
+POC 代码必须遵守以下约束，**违反任一约束的 POC 视为无效**：
+
+| 约束 | 规则 |
+|------|------|
+| **行数上限** | 单个 POC 文件不超过 100 行 |
+| **不修改生产代码** | POC 代码只能写入 `.claude/clarifications/{feature}-{session_id}/poc/` 目录 |
+| **单一技术验证** | 每个 POC 只验证一个技术风险点，不做集成测试 |
+| **无外部依赖安装** | 使用项目已有依赖或 Node.js/Python 标准库，不执行 `npm install`/`pip install` |
+| **超时限制** | 每个 POC 执行不超过 30 秒 |
+| **无副作用** | POC 不修改数据库、不写入生产目录、不调用外部 API |
+| **可丢弃** | POC 代码开发完即丢弃，不进入生产代码库 |
+
+**例外**：如果技术风险无法在 100 行内验证，Explorer 必须在报告中说明原因，并请求用户决策是否需要深入验证。
 
 ---
 
@@ -73,7 +89,7 @@ Completer ──▶ EXPLORER ──▶ Red-Teamer
 
 **失败处理**：{验证失败后怎么办}
 
-**代码位置**：`poc/{poc-id}.js`
+**代码位置**：`.claude/clarifications/{feature}-{session_id}/poc/{poc-id}.js`
 
 **预计时间**：{time}
 ```
@@ -213,7 +229,7 @@ verify_{poc_id}();
 - 考虑添加缓存
 - 或修改需求指标
 
-**代码位置**：`poc/poc-001-query-performance.js`
+**代码位置**：`.claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance.js`
 
 ---
 
@@ -239,7 +255,7 @@ verify_{poc_id}();
 - 引入分布式锁
 - 或降低并发预期
 
-**代码位置**：`poc/poc-002-concurrency.js`
+**代码位置**：`.claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js`
 ```
 
 ### Step 4: 代码生成（自动执行）
@@ -253,8 +269,8 @@ verify_{poc_id}();
 
 | POC-ID | 文件路径 | 状态 |
 |--------|----------|------|
-| POC-001 | poc/poc-001-query-performance.js | 已生成 |
-| POC-002 | poc/poc-002-concurrency.js | 已生成 |
+| POC-001 | `.claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance.js` | 已生成 |
+| POC-002 | `.claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js` | 已生成 |
 ```
 
 ### Step 5: POC 执行（自动执行）
@@ -268,7 +284,7 @@ verify_{poc_id}();
 
 **执行命令**：
 ```bash
-node poc/poc-001-query-performance.js
+node .claude/clarifications/{feature}-{session_id}/poc/poc-001-query-performance.js
 ```
 
 **执行结果**：
@@ -289,7 +305,7 @@ node poc/poc-001-query-performance.js
 
 **执行命令**：
 ```bash
-node poc/poc-002-concurrency.js
+node .claude/clarifications/{feature}-{session_id}/poc/poc-002-concurrency.js
 ```
 
 **执行结果**：
@@ -470,14 +486,20 @@ node poc/poc-002-concurrency.js
 
 **综合可行性评分**：{score}/10
 
+### POC 失败决策
+
+**当 ≥ 2 个 POC 失败时，必须使用 AskUserQuestion 工具请求用户决策**：
+- question: "技术探测发现 {count} 个方案验证失败，请决定后续处理方式？"
+- options: [A) 采纳建议的替代方案, B) 回到需求阶段修改技术方案, C) 继续尝试验证, D) 查看详细 POC 报告]
+
 ---
 
 ## 9. POC 代码清单
 
 | 文件 | 描述 | 状态 |
 |------|------|------|
-| poc/poc-001.js | 查询性能验证 | 已执行 |
-| poc/poc-002.js | 并发安全验证 | 已执行 |
+| `.claude/clarifications/{feature}-{session_id}/poc/poc-001.js` | 查询性能验证 | 已执行 |
+| `.claude/clarifications/{feature}-{session_id}/poc/poc-002.js` | 并发安全验证 | 已执行 |
 
 ---
 
@@ -493,7 +515,7 @@ explorer_output:
   new_requirements: [{list}]
   poc_results: [{list}]
   feasibility_score: {score}
-  poc_directory: "poc/"
+  poc_directory: ".claude/clarifications/{feature}-{session_id}/poc/"
 ```
 ```
 

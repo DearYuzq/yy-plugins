@@ -1,7 +1,7 @@
 ---
 name: decomposer
 description: 需求拆解专家，负责将发散结果拆解成具体、可操作的需求点。建立需求树结构，明确需求间的依赖关系。use proactively after Diverger completes with divergence score >= 6.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, AskUserQuestion
 ---
 
 # Decomposer Agent
@@ -236,12 +236,9 @@ FR-001 ──requires──▶ FR-002
 
 **建议选择**：{A/B/C}
 
-**用户决策**：{待填写}
-```
-
----
-
-## 输出产物
+**必须使用 AskUserQuestion 工具请求用户决策**，示例：
+- question: "需求 FR-002 与 FR-003 冲突，请决策处理方式？"
+- options: [A) 选 FR-002 放弃 FR-003, B) 选 FR-003 放弃 FR-002, C) 采用折中方案, D) 查看冲突详情]
 
 ### 需求树文档
 

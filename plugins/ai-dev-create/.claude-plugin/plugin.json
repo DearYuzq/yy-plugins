@@ -1,7 +1,7 @@
 {
   "name": "ai-dev-create",
   "version": "2.2.2",
-  "description": "多阶段需求澄清 + SDD/TDD 开发插件，支持发散-收敛流程、多 Agent 协作和按需加载",
+  "description": "约束求解驱动的多阶段开发插件：分散发散→收敛验证→约束提取→TDD闭环→自我进化",
   "author": {
     "name": "yuzq",
     "url": "https://github.com/yuzq"
@@ -14,21 +14,22 @@
     "tdd",
     "multi-agent",
     "orchestration",
-    "clarification",
+    "constraint-solving",
     "divergent",
     "convergent",
     "red-team",
     "blue-team",
     "springboot",
     "typescript",
-    "python"
+    "python",
+    "lessons-learned"
   ],
   "mcpServers": "./.mcp.json",
   "userConfig": {
     "defaultFlow": {
       "type": "string",
       "title": "默认开发流程",
-      "description": "默认开发流程: quick (TDD快速), standard (SDD标准), full (SDD完整), simplified (简化澄清)",
+      "description": "默认开发流程: quick (TDD快速), standard (SDD标准), full (SDD完整)",
       "default": "standard",
       "sensitive": false
     },
@@ -37,13 +38,6 @@
       "title": "自动保存会话",
       "description": "是否自动保存会话状态",
       "default": true,
-      "sensitive": false
-    },
-    "simplifyClarify": {
-      "type": "boolean",
-      "title": "简化澄清流程",
-      "description": "减少 Agent 调用次数，只使用 preprocessor + diverger，适合低质量模型",
-      "default": false,
       "sensitive": false
     }
   }

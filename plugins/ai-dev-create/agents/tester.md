@@ -1,9 +1,7 @@
 ---
 name: tester
 description: TDD 测试专家，负责编写和运行测试。当需要编写测试或运行测试验证时自动激活。use proactively when tests need to be written or run.
-tools: Read, Write, Edit, Grep, Glob, Bash
-skills:
-  - tdd-workflow
+tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 ---
 
 # Tester Agent
@@ -265,6 +263,12 @@ const user = new UserBuilder()
 | 函数覆盖率 | 80%+ | 函数被执行 |
 
 ## 测试清单
+
+### 测试策略确认
+
+开始编写测试前，使用 AskUserQuestion 确认测试范围：
+- question: "计划编写 {count} 个测试（单元 {n}、集成 {n}、E2E {n}），目标覆盖率 {n}%，是否满足？"
+- options: [A) 确认，开始编写, B) 增加 E2E 测试, C) 减少测试数量，快速验证, D) 查看测试计划详情]
 
 ### 提交前检查
 

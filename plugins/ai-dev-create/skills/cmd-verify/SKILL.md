@@ -23,7 +23,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Agent
 ## 验证流程
 
 ```
-BUILD → TYPE → LINT → TEST → SECURITY → DIFF
+BUILD → TYPE → LINT → TEST → SECURITY → DIFF → CONSTRAINT-MAP
 ```
 
 ### Phase 1: BUILD
@@ -67,17 +67,59 @@ ruff check .
 
 ### Phase 4: TEST
 
-运行测试套件。
+运行测试套件并**验证覆盖率阈值**。
 
 ```bash
-# TypeScript
+# TypeScript (Jest)
 npm test -- --coverage
+# 检查覆盖率输出或读取 coverage/coverage-summary.json
+# 要求: lines >= 80%, branches >= 75%, functions >= 80%
 
-# Python
-pytest --cov=src tests/
+# Python (pytest)
+pytest --cov=src --cov-report=json tests/
+# 读取 coverage.json 检查 thresholds
 
-# Java
-mvn test
+# Java (Maven Surefire + JaCoCo)
+mvn test jacoco:report
+# 读取 target/site/jacoco/index.html 或 XML 报告
+```
+
+**覆盖率阈值强制检查**：
+
+运行测试后，必须从覆盖率报告中提取实际数字并验证：
+
+| 指标 | 最低阈值 | 检查方式 |
+|------|----------|----------|
+| 行覆盖率 (Lines) | >= 80% | 解析 coverage-summary.json / coverage.json / jacoco.xml |
+| 分支覆盖率 (Branches) | >= 75% | 同上 |
+| 函数覆盖率 (Functions) | >= 80% | 同上 |
+
+如果任何指标低于阈值：
+1. 在验证报告中标记为 ❌ FAIL
+2. 列出具体差距（如 "行覆盖率 72%，差 8 个百分点"）
+3. 回退到 TEST 阶段补充测试
+4. 更新重试计数，若超过 3 次则请求用户决策
+
+### Phase 3.5: COVERAGE（覆盖率专项验证）
+
+在 TEST 阶段之后显式执行覆盖率检查：
+
+```
+1. 定位覆盖率报告文件（按优先级）:
+   - coverage/coverage-summary.json (Jest)
+   - coverage/coverage-final.json (nyc/istanbul)
+   - coverage.json (pytest-cov)
+   - target/site/jacoco/jacoco.xml (JaCoCo)
+
+2. 如果报告文件存在:
+   - 解析行/分支/函数覆盖率
+   - 与阈值对比 (lines >= 80%, branches >= 75%, functions >= 80%)
+   - 记录结果到验证报告
+
+3. 如果报告文件不存在:
+   - 标记为 ⚠️ WARN: "未检测到覆盖率报告，无法验证覆盖率阈值"
+   - 建议运行带 --coverage 标志的测试命令
+   - 不阻断验证流程（WARN 而非 FAIL）
 ```
 
 ### Phase 5: SECURITY
@@ -87,6 +129,11 @@ mvn test
 - 无硬编码密钥
 - 无敏感信息日志
 - 无调试代码残留
+- **依赖漏洞扫描**（如果项目支持）:
+  - Node.js: `npm audit` 或 `yarn audit`
+  - Python: `pip-audit` 或 `safety check`
+  - Java: `mvn org.owasp:dependency-check-maven:check`
+- 如有 CRITICAL/HIGH 依赖漏洞，标记为 FAIL
 
 ### Phase 6: DIFF
 
@@ -96,6 +143,21 @@ mvn test
 git diff --stat
 git diff --name-only
 ```
+
+### Phase 7: CONSTRAINT-MAP
+
+约束-代码追溯验证。
+
+```bash
+# 自动执行约束验证脚本
+node plugins/ai-dev-create/scripts/verify-constraints.js .claude/constraints/{feature}/constraint-tree.yaml
+```
+
+检查项目：
+- 每条约束（constraint_ids）是否有对应函数实现
+- 函数签名与约束树中的定义一致
+- 无孤立函数（定义了但约束树中没有的函数）
+- 生成覆盖报告到 `.claude/reports/constraint-coverage.md`
 
 ## 输出格式
 
@@ -109,8 +171,10 @@ git diff --name-only
 | Type | ✅ PASS | 无类型错误 |
 | Lint | ⚠️ WARN | 3 个警告 |
 | Test | ✅ PASS | 50/50 通过 |
+| **Coverage** | ✅ PASS | Lines: 85% / Branches: 78% / Functions: 82% |
 | Security | ✅ PASS | 无问题 |
 | Diff | ✅ PASS | 5 个文件变更 |
+| Constraint-Map | ✅ PASS | 12/12 约束已覆盖 |
 
 ## 结论
 ✅ 验证通过，可以提交 PR
@@ -140,13 +204,13 @@ git diff --name-only
 
 | Agent | 调用时机 | 输入 | 输出 |
 |-------|----------|------|------|
-| reviewer | SECURITY 或 DIFF 阶段 | 代码变更 | 审查报告 |
+| (implementer 自检) | SECURITY 或 DIFF 失败时 | 代码变更 | 修复报告 |
 
 ### 调用方式
 
 ```
 Agent 工具参数：
-- subagent_type: "ai-dev-create:reviewer"
+- subagent_type: "ai-dev-create:implementer"
 - description: "代码审查"
 - prompt: "审查以下代码变更的质量和安全性：
   变更文件：{文件列表}
@@ -171,6 +235,7 @@ Agent 工具参数：
 2. 运行 TYPE 检查
 3. 运行 LINT 检查
 4. 运行 TEST 检查
-5. 运行 SECURITY 检查（使用 Agent 工具调用 reviewer agent）
-6. 运行 DIFF 审查
-7. 生成验证报告
+5. 运行 COVERAGE 覆盖率验证（检查阈值: lines >= 80%, branches >= 75%, functions >= 80%）
+6. 运行 SECURITY 检查（含依赖漏洞扫描）
+7. 运行 DIFF 审查
+8. 生成验证报告（含覆盖率数据）

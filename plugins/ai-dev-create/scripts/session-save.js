@@ -53,9 +53,25 @@ function findFiles(dir, pattern) {
 }
 
 function detectCurrentPhase() {
+  // 优先策略: 读取 session.json 中持久化的 phase 字段
+  const projectSessionFile = path.join(process.cwd(), '.claude', 'session.json');
+  if (fs.existsSync(projectSessionFile)) {
+    try {
+      const existing = JSON.parse(fs.readFileSync(projectSessionFile, 'utf8'));
+      if (existing.sddState && existing.sddState.currentPhase) {
+        const phase = existing.sddState.currentPhase;
+        if (SDD_PHASES.includes(phase)) {
+          return phase;
+        }
+      }
+    } catch {
+      // session.json 损坏, 退回到文件启发式检测
+    }
+  }
+
+  // 回退策略: 基于文件存在的启发式检测
   const dirs = getProjectDirs();
 
-  // 检查各阶段文件是否存在
   const hasClarification = fs.existsSync(dirs.clarifications) && findFiles(dirs.clarifications, /\.md$/).length > 0;
   const hasSpec = fs.existsSync(dirs.specs) && findFiles(dirs.specs, /\.md$/).length > 0;
   const hasPlan = fs.existsSync(dirs.plans) && findFiles(dirs.plans, /\.md$/).length > 0;
@@ -63,14 +79,12 @@ function detectCurrentPhase() {
   const hasReview = fs.existsSync(dirs.reviews) && findFiles(dirs.reviews, /\.md$/).length > 0;
 
   // 推断当前阶段（按照流程顺序判断）
-  // 如果所有产出物都存在，说明可能在进行 IMPL 或需要运行 VERIFY
   if (!hasClarification) return 'CLARIFY';
   if (!hasSpec) return 'SPEC';
   if (!hasPlan) return 'PLAN';
   if (!hasTests) return 'TEST';
   if (!hasReview) return 'REVIEW';
 
-  // 如果所有文档都存在，可能在进行 IMPL 或准备 VERIFY
   return 'IMPL';
 }
 

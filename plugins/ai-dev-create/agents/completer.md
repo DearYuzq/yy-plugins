@@ -1,7 +1,7 @@
 ---
 name: completer
 description: 需求补全专家，负责端到端逻辑链条完整性检查，保证需求满足依赖关系。use proactively after user confirms divergent phase results.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, AskUserQuestion
 ---
 
 # Completer Agent
@@ -265,6 +265,11 @@ FR-001 (输入验证)
 **Should**：{count}
 ```
 
+**当存在 Must 级别新增缺失需求时，必须使用 AskUserQuestion 工具确认**：
+- question: "完整性检查发现 {count} 个 Must 级别的缺失需求，是否全部纳入需求范围？"
+- options: [A) 全部纳入, B) 仅纳入高风险项, C) 查看缺失详情, D) 跳过，接受风险]
+- 用户确认后继续进入 Step 7。
+
 ### Step 7: 一致性检查（必须完成）
 
 ```markdown
@@ -304,7 +309,7 @@ FR-001 (输入验证)
 > Session ID: {session_id}
 > 创建时间：{timestamp}
 > 状态：{completed}
-> 来源：04-challenger-report.md (用户确认后)
+> 来源：04-critique-structured.md (用户确认后)
 
 ---
 

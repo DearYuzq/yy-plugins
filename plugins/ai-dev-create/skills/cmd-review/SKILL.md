@@ -1,25 +1,38 @@
 ---
 name: review
-description: 代码审查，检查质量、安全性和可维护性。
+description: 代码审查，检查质量、安全性和可维护性。独立于 IMPL 阶段自检，提供交叉审查视角。
 disable-model-invocation: true
 argument-hint: [path] [--full] [--security]
 context: fork
-agent: reviewer
+agent: implementer
 allowed-tools: Read, Grep, Glob, Bash
 ---
 
 # /ai-dev-create:review - 代码审查
 
-执行全面的代码审查，检查质量、安全性、性能和可维护性。
+执行**独立**代码审查，检查质量、安全性、性能和可维护性。
+
+> **⚠️ 独立审查**：与 IMPL 阶段的自检不同，本命令提供交叉审查视角——审查者未参与代码编写，必须以外部审计标准执行。
 
 ## 使用方式
 
 ```bash
-/ai-dev-create:review                    # 审查最近的变更
+/ai-dev-create:review                    # 审查最近的变更（默认焦点）
 /ai-dev-create:review path/to/file       # 审查指定文件
-/ai-dev-create:review --full             # 完整项目审查
-/ai-dev-create:review --security         # 安全审查焦点
+/ai-dev-create:review --full             # 全面审查（所有维度 + 优雅性）
+/ai-dev-create:review --security         # 安全焦点审查（深度安全分析）
 ```
+
+## 审查模式
+
+### 默认模式（默认）
+标准维度的交叉审查：质量、安全、性能、可维护性。
+
+### 全面审查模式（--full）
+默认模式 + 深度优雅性检查（架构合理性、抽象层次、模式适用性）。
+
+### 安全焦点模式（--security）
+深度安全分析：OWASP Top 10 + 业务逻辑攻击 + 数据流追踪。
 
 ## 审查维度
 
@@ -60,6 +73,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 ## 概述
 - 审查文件：[文件列表]
+- 审查模式：[默认/全面/安全焦点]
 - 严重程度：CRITICAL/HIGH/MEDIUM/LOW
 
 ## 发现问题
@@ -72,101 +86,19 @@ allowed-tools: Read, Grep, Glob, Bash
 ### HIGH
 ...
 
-### MEDIUM
-...
-
-### LOW
-...
-
-## 积极发现
-- [优点1]
-- [优点2]
-
-## 建议改进
-1. [建议1]
-2. [建议2]
-
-## 结论
-[通过/需要修改]
-```
-
-## 严重程度定义
-
-| 级别 | 描述 | 处理优先级 |
-|------|------|-----------|
-| CRITICAL | 安全漏洞、数据丢失风险 | 立即修复 |
-| HIGH | 功能缺陷、严重性能问题 | 本次迭代修复 |
-| MEDIUM | 代码质量、可维护性 | 计划修复 |
-| LOW | 建议改进、最佳实践 | 可选 |
-
-## 技术栈特定检查
-
-### TypeScript/React
-
-- [ ] 类型定义完整
-- [ ] Props 有类型注解
-- [ ] useEffect 依赖正确
-- [ ] 无 any 类型滥用
-
-### Python
-
-- [ ] 类型注解使用
-- [ ] 文档字符串完整
-- [ ] 异常处理正确
-- [ ] PEP 8 遵循
-
-### Spring Boot
-
-- [ ] 事务注解正确
-- [ ] 异常处理完整
-- [ ] Bean 注入正确
-- [ ] API 文档完整
-
-## 下一步
-
-审查完成后：
-- 修复 CRITICAL/HIGH 问题
-- 运行 `/ai-dev-create:verify` 再次验证
-- 创建 PR
-
 ---
 
 ## Agent 调用
 
-本命令需要调用以下 Agent：
+### 流程
 
-### 调用的 Agent
+1. 确定审查范围和模式（指定文件/最近变更，标志模式）
+2. 直接分析目标代码（不调用子 agent）
+3. 按审查模式生成报告
 
-| Agent | 调用时机 | 输入 | 输出 |
-|-------|----------|------|------|
-| reviewer | 命令启动时 | 文件路径或变更列表 | 审查报告 |
+### 审查模式切换
 
-### 调用方式
-
-```
-Agent 工具参数：
-- subagent_type: "ai-dev-create:reviewer"
-- description: "代码审查"
-- prompt: "审查以下文件的代码质量、安全性和可维护性：
-  文件：{文件路径或 'git diff 变更'}
-  审查维度：质量、安全、性能、可维护性"
-```
-
-### 上下文传递
-
-**接收的上下文**：
-- 指定文件路径（如有）
-- 或 git diff 变更列表
-
-**输出的上下文**：
-- 审查报告
-- 问题列表（按严重程度分类）
-- 改进建议
-
-### 执行流程
-
-1. 确定审查范围（指定文件或最近变更）
-2. 使用 Agent 工具调用 reviewer agent
-3. 等待 agent 返回审查报告
-4. 显示审查结果
-5. 提示修复建议
+根据是否提供 `--full` 或 `--security` 标志：
+- 无标志：默认模式，关注 4 个基本维度
+- `--full`：默认 + 深度优雅性检查
+- `--security`：安全焦点，生成完整攻击面报告
