@@ -13,6 +13,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 - TEST 阶段：测试文件路径、失败列表（驱动实现优先级）
 - PLAN 阶段：`.claude/plans/{feature}.md`（文件变更清单、技术约束）
 - 约束树：`.claude/constraints/{feature}/constraint-tree.yaml`（函数签名、约束映射）
+- 项目上下文：`.claude/project-context.md`（代码风格、命名约定、错误处理模式）
 
 ## 输出上下文
 
@@ -67,6 +68,21 @@ tools: Read, Write, Edit, Grep, Glob, Bash
 
 ---
 
+## 项目上下文对齐
+
+开始实现前，读取 `.claude/project-context.md`：
+
+- **OLD_PROJECT**:
+  - 新建文件的路径遵循 "Architecture" 中的目录约定
+  - 函数/类命名遵循 "Naming Conventions"
+  - 错误处理使用 "Error Handling" 中记录的模式
+  - Import 语句风格遵循 "Code Style"
+  - 参考 "Files to Reference for Style" 中的示例文件
+- **NEW_PROJECT**: 遵循 PLAN 文档中 Planner 决定的模式
+- **NEW_PROJECT_EVOLVED**: 遵循 project-context.md 中已记录的风格基准文件
+
+---
+
 ## TDD 模式
 
 ```
@@ -93,63 +109,28 @@ RED (测试失败) → GREEN (最小实现通过) → REFACTOR (优雅性改进)
 
 ## 自检 REVIEW（代码完成后执行）
 
-所有测试 GREEN + 约束覆盖通过后，**Implementer 必须执行以下自检**（取代原独立 Reviewer agent）：
+所有测试 GREEN + 约束覆盖通过后，**Implementer 必须执行轻量自检**（3 维基础检查）：
 
-> **⚠️ 独立审查模式**：当被 `/ai-dev-create:review` 命令调用时，切换到"审查者视角"——你没有参与这段代码的编写，必须以更严格的标准审视。特别关注：
-> - 你是否在不了解上下文的情况下做了过度设计？
-> - 是否有你熟悉但不适合当前场景的模式被误用？
-> - 如果你是外部审查者，你会提出哪些质疑？
-> - **核心原则**：审查模式下，将所有"我觉得没问题"替换为"我证明了没问题"——给出具体证据而非主观判断。
+> **范围定位**：此自检仅覆盖质量基础、安全基础和约束覆盖。完整 7 维审查由独立 Reviewer Agent 负责（`agents/reviewer.md`）。安全标准见 `templates/security-standards.md`。
 
-> **审查模式切换检查**：根据 `cmd-review` 传入的 `--full` 或 `--security` 标志，分别进入全面审查模式或安全焦点审查模式。
+### 1. 代码质量基础
 
-### 1. 代码质量 (Quality)
 - [ ] 函数长度 < 50 行
 - [ ] 文件长度 < 800 行
 - [ ] 嵌套深度 < 4 层
-- [ ] 无重复代码
 - [ ] 命名清晰无歧义
 
-### 2. 安全性 (Security)
-- [ ] 无硬编码密钥
-- [ ] 输入验完整
-- [ ] SQL 注入/XSS/CSRF 防护
-- [ ] 认证/授权验证
+### 2. 安全基础
 
-### 3. 性能 (Performance)
-- [ ] 无 N+1 查询
-- [ ] 适当的缓存
-- [ ] 异步操作正确
-- [ ] 资源释放正确
+- [ ] 无硬编码密钥（见 `templates/security-standards.md` 通用 #5）
+- [ ] 输入验证到位（见 `templates/security-standards.md` 通用 #1）
 
-### 4. 优雅性 (Elegance)
-- [ ] 方案是否生硬？有没有更自然的方案？
-- [ ] 是否过度设计？能否更简单？
-- [ ] 抽象层次是否恰当？
+### 3. 约束覆盖
 
-### 5. 可维护性 (Maintainability)
-- [ ] 遵循项目约定
-- [ ] 依赖注入正确
-- [ ] 错误处理一致
-- [ ] 日志记录适当
-
-### 6. 约束覆盖
 - [ ] 每个 `constraint_id` 有对应函数实现
 - [ ] 对比约束树 YAML，确认无遗漏
 
-### 技术栈特定检查
-- **TypeScript/React**：类型完整、Props 有类型注解、useEffect 依赖正确、无 any 滥用
-- **Python**：类型注解、文档字符串、异常处理、PEP 8
-- **Spring Boot**：事务注解正确、异常处理、Bean 注入、API 文档
-
-### CRITICAL/HIGH 问题处理
-自检发现 CRITICAL 或 HIGH 问题时：
-1. 立即修复
-2. 修复后重新运行所有测试
-3. 重新执行自检
-4. 如无法自行修复，通知 orchestrator 并请求用户决策
-
-自检全部通过后，更新计划文档标记 REVIEW ✅，然后进入 VERIFY 阶段。
+> 自检全部通过后，进入独立 REVIEW 阶段。性能、架构合理性、优雅性等维度留给独立 Reviewer 审查。
 
 ---
 

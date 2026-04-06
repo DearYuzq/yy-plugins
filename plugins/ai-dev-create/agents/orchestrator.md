@@ -20,9 +20,12 @@ FUNCTION session_init():
   1. 读取 tasks/lessons.md（如存在），提取 "Rules to Always Follow"
   2. 应用到本次会话所有决策
   3. 读取 .claude/session.json（如存在），恢复上次进度
-  4. 创建/更新 tasks/todo.md，写入可勾选执行计划
-  5. 检测是否存在已有的澄清产物（见下方"产物复用检测"）
+  4. 读取 templates/todo-template.md，使用其格式创建/更新 tasks/todo.md，写入可勾选执行计划
+  5. **执行项目上下文检测（轻量探测）**：运行 `detect-project-context.js`，生成 `.claude/project-context.md`。若已有缓存（30 分钟内）则复用。
+  6. 检测是否存在已有的澄清产物（见下方"产物复用检测"）
 ```
+
+> 项目上下文文档 `.claude/project-context.md` 由 session_init() 自动生成，所有后续 Agent（Planner、Tester、Implementer、Reviewer）必须读取并遵循其中约定的风格。
 
 ### 产物复用检测
 
@@ -41,6 +44,21 @@ ELSE:
 ```
 
 > ⚠️ 此机制允许用户先运行 `/clarify` 独立澄清，再运行 `/sdd-standard` 或 `/sdd-full` 进入开发流程，无需重复执行澄清链路。
+
+### POC 代码自动归档
+
+当 Convergent Summary 生成后，自动归档旧 POC 代码，保持目录整洁：
+
+```
+IF .claude/clarifications/{feature}-{session_id}/poc/ 目录存在:
+  → 创建 .claude/clarifications/{feature}-{session_id}/.poc-archive/ 目录（如不存在）
+  → 执行: mv poc/ .claude/clarifications/{feature}-{session_id}/.poc-archive/
+  → 在 session.json 中记录归档路径
+```
+
+该步骤自动执行，无需 AskUserQuestion。归档包含当前特性目录下的 poc/ 整个目录。用户如需查看归档 POC，可访问 `.claude/clarifications/{feature}-{session_id}/.poc-archive/`。
+
+> 📌 注意：POC 清理仅由 orchestrator 执行，Explorer Agent 不主动触发清理。详见 `agents/explorer.md` "POC 代码管理" 章节。
 
 ## 全程强制规则
 
@@ -86,10 +104,10 @@ ELSE:
 │       │              │                                          │
 │       └────── 失败回退 ──┤                                      │
 │                            ▼                                    │
-│                  REVIEW (独立审查)                               │
-│                           │                                     │
-│                      TEST → IMPL                                │
+│                        TEST → IMPL                              │
 │                 （IMPL 含自检 REVIEW）                           │
+│                            │                                    │
+│                  REVIEW (独立审查)                               │
 │                            │                                    │
 │                          VERIFY                                  │
 │                            │                                    │
@@ -107,23 +125,23 @@ ELSE:
 
 | 阶段 | /tdd-quick | /sdd-standard | /sdd-full |
 |------|:----------:|:-------------:|:---------:|
-| A: Critique (raw) | ✅ quick | ✅ | ✅ (full) |
-| **Mini-Clarify Gate** | ✅ | N/A | N/A |
+| A: Critique (raw) | ✅ + 清单评分 | ✅ | ✅ (full) |
+| **Mini-Clarify Gate** | ✅ (≥3 个问题) | N/A | N/A |
 | B: Diverger | ❌ | ✅ | ✅ |
 | C: Decomposer | ❌ | ❌ | ✅ |
 | D: Critique (structured) | ❌ | ❌ | ✅ |
 | **用户确认点** | ❌ | ✅ | ✅ |
-| E: Completer | ❌ | ❌ | ✅ |
-| F: Explorer (POC) | ❌ | ❌ | ✅ |
+| E: Completer | ❌ | ✅ | ✅ |
+| F: Explorer (POC) | ❌ | ❌ | ✅ (multi-profile) |
 | G: Security Teamer | ❌ | ⚡ 轻量 | ✅ (full) |
 | **H: 最终需求汇总** | ❌ | ❌ | ✅ |
 | **Constraint Extractor** | inline | ✅ | ✅ |
-| SPEC | ❌ | ✅ | ✅ |
-| PLAN | ❌ | ✅ | ✅ |
+| SPEC | ❌ | ✅ + 错误处理策略 | ✅ |
+| PLAN | ❌ | ✅ + 架构审查 | ✅ |
 | TEST | ✅ | ✅ | ✅ |
-| IMPL (+自检 REVIEW) | ✅ | ✅ | ✅ |
-| **独立 REVIEW** | ❌ | ✅ | ✅ |
-| VERIFY | ✅ | ✅ | ✅ |
+| IMPL (+轻量自检 3 维) | ✅ | ✅ | ✅ |
+| **独立 REVIEW** | ❌ | ✅ (reviewer Agent, 7 维) | ✅ (reviewer Agent, 7 维) |
+| VERIFY | ✅ + AST 约束验证 | ✅ + AST 约束验证 | ✅ + AST 约束验证 + 运维就绪 |
 
 > ⚡ /sdd-standard 的 Security Teamer 使用轻量模式——只检查明显 OWASP 漏洞，不做完整红蓝对抗。
 
@@ -136,7 +154,21 @@ ELSE:
 - [x] C2: 响应时间 < 200ms → 实现：缓存中间件
 ```
 
-此步骤在 Critique (quick) 完成后、TEST 开始前执行。
+此步骤在 Critique (quick) 完成后、TEST 开始前，由 **Critique Agent (raw mode)** 执行。
+
+**Critique Agent 在 quick mode 下的额外职责**：
+1. 从 Critique(raw) 解析结果中提取约束
+2. 按内联约束模板格式写入 `tasks/constraints-inline.md`
+3. 每个约束格式：`- [x] C{N}: {描述} → 实现：{函数名或方案}`
+
+内联约束模板见 `templates/inline-constraints-template.md`。
+
+**VERIFY 阶段自动验证**：
+```bash
+node "${CLAUDE_PLUGIN_ROOT}/scripts/verify-inline-constraints.js" tasks/constraints-inline.md
+```
+
+> ⚠️ **降级等效 REVIEW**：/tdd-quick 不运行独立 reviewer Agent。IMPL 阶段的自检（3 维：代码质量基础、安全基础、约束覆盖）作为降级等效独立 REVIEW。**适用场景限制**：此降级仅适用于需求清晰、影响范围小的变更（Bug 修复、简单功能）。若实施过程中发现复杂度超出预期（涉及新功能接口、安全敏感、跨模块变更），应升级为 `/sdd-standard` 或 `/sdd-full` 路径，启用独立 7 维 REVIEW。
 
 ---
 
@@ -190,6 +222,28 @@ ELSE:
 
 **用户确认点**：D 完成后必须 AskUserQuestion 确认，才能进入收敛。
 
+### 管道中间产物质量门（D 阶段后自动执行，不消耗重试次数）
+
+在 Phase D 完成、进入用户确认点之前，自动执行以下质量门检查。任一不满足时，通知对应 Agent 重新执行该阶段报告（最多重试 1 次），再次检查仍不满足则告知用户。
+
+```
+质量门检查：
+1. 01-critique-raw.md 必须包含 ≥ 3 个具体问题（非泛泛而谈的空洞判断）
+2. 02-diverger-report.md 必须包含 ≥ 3 个具体 What-If 场景分析
+3. 03-requirement-tree.md 必须包含依赖图（非空列表）
+4. 交叉检查：Diverger 提到的场景必须在 Critique 中被评估或讨论过
+5. 交叉检查：Decomposer 的每个功能节点必须有明确的 MoSCoW 优先级
+```
+
+**不满足时的处理**：
+```
+IF 检查不通过:
+  → 通知对应 Agent 重新执行（如 Diverger 场景不足，重新调用 diverger 补充）
+  → 等待重新生成后再次检查
+  IF 第二次仍不满足:
+    → 告知用户质量门未通过，建议继续或人工干预
+```
+
 ---
 
 ## CLARIFY 收敛阶段（E→G）
@@ -227,8 +281,22 @@ ELSE:
 | Agent | `ai-dev-create:security-teamer` (mode=full / mode=light) |
 | 方法 | 红方：SQLi/XSS/越权/业务逻辑攻击；蓝方：防御设计+优先级排序 |
 | 输入 | POC 结果 → 攻击报告 |
-| 输出 | `07-security-report.md` + `.claude/summaries/convergent-summary.md` |
-| 完成条件 | CRITICAL 漏洞已设计缓解方案，收敛摘要已生成 |
+| 输出 | `07-security-report.md` |
+| 完成条件 | CRITICAL 漏洞已设计缓解方案 |
+
+> 收敛摘要（convergent-summary.md）由 Orchestrator 读取 07-security-report.md 等报告后自行生成，Security Teamer 不再承担此职责。
+
+### 技术决策更新（CLARIFY Phase G 完成后执行）
+
+澄清阶段完成后，对比 `.claude/project-context.md` 与澄清过程确定的技术选型。若会话初始化时项目为 NEW_PROJECT 或缺少技术栈信息，而澄清阶段确认了以下任何决策，则更新 project-context.md：
+
+- 框架选择（如 "使用 FastAPI"、"用 React"）
+- 数据库选择
+- 架构模式
+- 关键中间件（Redis、消息队列等）
+
+更新方式：在 project-context.md 中追加 `User-Confirmed Tech Decisions` 章节，标记 `source: user-confirmed`。
+
 
 **Full Mode**（/sdd-full）：完整攻击面分析 + 四向量攻击 + 完整防御方案。
 **Light Mode**（/sdd-standard）：轻量安全检查——只检查明显 OWASP 漏洞（SQL注入、XSS、越权、硬编码凭据），设计核心防御方案。
@@ -289,12 +357,19 @@ ELSE:
 
 | 触发条件 | 动作 |
 |----------|------|
-| SPEC 阶段发现新约束需求 | 标记新增约束，运行增量提取 |
-| PLAN 阶段技术选型变更导致函数签名变化 | 标记修改约束，运行增量更新 |
+| SPEC 阶段发现新约束需求 | 标记新增约束，使用 YAML diff 运行增量更新 |
+| PLAN 阶段技术选型变更导致函数签名变化 | 使用 YAML diff 对比差异，仅处理修改部分 |
 | TEST 阶段发现约束无法通过测试覆盖 | 标记约束冲突，通知 orchestrator |
-| 需求变更（用户修改原始需求） | 完整重新提取约束树 |
+| 需求变更（用户修改原始需求） | 使用 YAML diff 对比旧版，仅处理 changed/removed/added |
 
 **增量更新 vs 完全重新提取**：
+
+使用 `scripts/verify-constraints.js` 中的 `diffConstraintTrees(oldPath, newPath)` 函数。该函数解析两版 YAML 后输出 `{added: [...], removed: [...], modified: [...]}`。约束提取工具根据差异结果进行以下操作：
+- `added` 列表：仅提取新增需求对应的约束
+- `removed` 列表：移除废弃的约束节点
+- `modified` 列表：仅更新签名/测试已变更的约束
+
+无需全量重新提取整个约束树（除非变化 > 30% 或 diff 显示结构被重写）。
 - 仅新增/修改少量约束 → 增量更新（保留现有结构，添加或修改节点）
 - 需求树结构变化 > 30% → 完全重新提取
 - 使用 `constraint-tree.yaml` 中的版本字段追踪变更
@@ -304,6 +379,8 @@ ELSE:
 ## 上下文压缩策略
 
 ### 发散→收敛摘要（Divergent Summary）
+
+> 📌 **内置格式**：此摘要格式在 orchestrator.md 中唯一定义，无独立模板文件，由 Orchestrator 直接生成。
 
 ```
 FUNCTION divergent_phase_summary():
@@ -315,6 +392,8 @@ FUNCTION divergent_phase_summary():
 提取：核心需求（Must-have only）、技术约束、已删除需求（仅 ID）、用户决策、待解决风险。
 
 ### 收敛→执行摘要（Convergent Summary）
+
+> 📌 **内置格式**：此摘要格式在 orchestrator.md 中唯一定义，由 Orchestrator 在 Phase G（Security Teamer）完成后直接生成。
 
 ```
 FUNCTION convergent_phase_summary():
@@ -329,10 +408,12 @@ FUNCTION convergent_phase_summary():
 
 | 摘要函数 | 执行者 | 触发时机 | 输出路径 |
 |----------|--------|----------|----------|
-| `divergent_phase_summary()` | Diverger | Phase 1D 完成后 | `.claude/summaries/divergent-summary.md` |
-| `convergent_phase_summary()` | Security Teamer | Phase 2C 完成后 | `.claude/summaries/convergent-summary.md` |
+| `divergent_phase_summary()` | **Orchestrator 直接执行** | Phase 1D 完成后 | `.claude/summaries/divergent-summary.md` |
+| `convergent_phase_summary()` | **Orchestrator 直接执行** | Phase 2G（Security Teamer）完成后 | `.claude/summaries/convergent-summary.md` |
 
-两个摘要均由 orchestrator 指示对应 agent 生成。SPEC/PLAN 阶段仅读取摘要文件，不读取原始中间报告。若摘要不存在，orchestrator 应拒绝进入 SPEC 阶段并提示生成。
+两个摘要均由 Orchestrator 直接生成（Security Teamer 仅产出 `07-security-report.md`，不再承担摘要生成职责）。SPEC/PLAN 阶段仅读取摘要文件，不读取原始中间报告。若摘要不存在，orchestrator 应拒绝进入 SPEC 阶段并提示生成。
+
+**Completer 反馈环**：Completer 执行时发现大规模缺失需求（综合完整性 < 6、Must 级缺失 ≥ 5 条），应反馈至 Critique (structured) 重新评估需求结构。在流程图中， Completer → Critique(structured) 的反馈环由失败恢复表驱动，非线性强制。
 
 ### H: 最终需求汇总
 
@@ -350,24 +431,74 @@ FUNCTION convergent_phase_summary():
 | 2 | PLAN | `ai-dev-create:planner` (mode=plan) | SPEC + 代码库 | `.claude/plans/{f}.md` | **AskUserQuestion 确认** |
 | 3 | TEST | `ai-dev-create:tester` | PLAN + 约束树 | 测试文件 | RED 状态 |
 | 4 | IMPL | `ai-dev-create:implementer` | TEST + PLAN + 约束树 | 生产代码 | GREEN 状态 + 自检通过 |
-| **5** | **REVIEW** | `ai-dev-create:implementer` (reviewer mode) | IMPL 产出代码 + git diff | `.claude/reviews/{f}.md` | 无 CRITICAL/HIGH 问题 |
+| **5** | **REVIEW** | `ai-dev-create:reviewer` | IMPL 产出代码 + SPEC + PLAN + 约束树 + git diff | `.claude/reviews/{f}.md` | 无 CRITICAL/HIGH 问题 |
 | 6 | VERIFY | (orchestrator 执行) | 所有产出物 | 验证报告 | 全部检查通过 |
 
-> **独立 REVIEW 阶段**：REVIEW 已设为 IMPL 后的独立阶段（步骤 5），调用 implementer 的 reviewer mode 执行交叉审查。审查报告写入 `.claude/reviews/{f}.md`。CRITICAL/HIGH 问题必须修复后才能进入 VERIFY。
+> **独立 REVIEW 阶段**：REVIEW 是 `ai-dev-create:reviewer` 作为独立 Agent 执行的交叉审查（不再由 implementer 自检替代）。审查者未参与代码编写，采用 "expectation vs. reality" 方法审查。审查报告写入 `.claude/reviews/{f}.md`。CRITICAL/HIGH 问题必须修复后才能进入 VERIFY。
+
+### 渐进式项目上下文更新
+
+IMPL 阶段完成后执行以下检查：
+
+```
+IF .claude/project-context.md 中 type == "NEW_PROJECT":
+  → 运行 detect-project-context.js（清缓存后重新扫描）
+  → 若检测到新增源文件且 type 变为 "NEW_PROJECT_EVOLVED"：
+      → 更新 project-context.md，标记 "Files to Reference for Style" 指向新文件
+      → 后续 TEST/REVIEW/VERIFY 可参考这些新文件作为风格依据
+```
+
+这确保新项目首次实施后自动建立风格基准，后续 feature 开发自动继承。
 
 ---
 
 ## TEST → IMPL 闭环（TDD）
 
 ```
-RED (TEST) ──▶ GREEN (IMPL) ──▶ REFACTOR ──▶ 自检 REVIEW ──▶ 验证
+第一轮: RED (TEST) ──▶ GREEN (IMPL) ──▶ REFACTOR
+第二轮: TEST 补充边界 ──▶ GREEN (IMPL 修复) ──▶ 自检 REVIEW ──▶ 验证
 ```
 
-1. 调用 tester agent 编写失败的测试 → RED
-2. 调用 implementer agent 实现最小代码 → GREEN
-3. Implementer 完成全部功能后执行自检 REVIEW
-4. Implementer 参考约束树中函数签名实现代码
-5. **IMPL 完成后进入独立 REVIEW 阶段**（步骤 5），交叉审查通过后进入 VERIFY
+**第一轮迭代**：
+1. 调用 tester agent 编写测试（功能测试 + 边界测试）→ RED 状态
+2. 调用 implementer agent 实现最小代码 → GREEN 状态
+3. Implementer 参考约束树中函数签名实现代码
+
+**第二轮迭代**：
+4. Tester 基于 IMPL 第一轮实际实现中暴露的新路径/边界条件，补充异常/边界测试用例
+5. 运行补充后的测试 → 新 RED → IMPL 修复 → GREEN
+6. Implementer 完成全部功能后执行自检 REVIEW（3 维）
+
+> 最大 2 轮迭代。第二轮后测试全部 GREEN 则进入 REVIEW；若第二轮仍有 RED 但非阻塞性功能缺陷，进入独立 REVIEW 由审查者判断。
+
+7. **IMPL 完成后进入独立 REVIEW 阶段**，交叉审查通过后进入 VERIFY
+
+### 约束测试覆盖强制门控
+
+Tester 在编写测试时必须覆盖 constraint-tree.yaml 中定义的每个测试用例。VERIFY 阶段的 CONSTRAINT-BEHAVIOR 步骤会最终验证这一点。
+
+### 测试范围确认规则
+
+Tester Agent 在首次编写测试前使用 AskUserQuestion 确认测试范围，此确认点由 Orchestrator 统一管理。具体行为：
+- 在调用 Tester Agent 之前，Orchestrator 先确认用户同意测试范围
+- 若用户跳过确认，Tester 按自主判断编写测试
+- 若 Orchestrator 已在之前确认过，Tester 不重复提问
+
+---
+
+## AskUserQuestion 协调规则
+
+所有子 Agent 调用 AskUserQuestion 必须遵守以下规则：
+
+1. **去重**：如果 Orchestrator 已经在上游确认过同一问题，子 Agent 不重复提问
+2. **降级**：如果用户已跳过之前的确认，子 Agent 使用自主判断而非阻塞
+3. **聚合**：Orchestrator 在进入新阶段前，将后续 Agent 可能需要问的问题合并为一次提问
+4. **优先级门控**：
+   - Critique (structured) 的需求删除确认 → Orchestrator 在 D 完成后处理
+   - Completer 的 Must 缺失需求确认 → 由 Orchestrator 转发给用户
+   - Explorer 的 Low 置信度决策确认 → 由 Orchestrator 在阶段结尾统一处理
+   - Tester 的测试范围确认 → 由 Orchestrator 在 TEST 阶段前处理
+   - Security CRITICAL 漏洞决策 → Security 可直接提问（安全风险不应聚合延迟）
 
 ---
 
@@ -381,7 +512,19 @@ RED (TEST) ──▶ GREEN (IMPL) ──▶ REFACTOR ──▶ 自检 REVIEW ─
 4. **TEST** — 测试套件 + 覆盖率
 5. **SECURITY** — 安全扫描（依赖漏洞、硬编码密钥）
 6. **DIFF** — 代码变更对比
-7. **CONSTRAINT-MAP** — 运行 `verify-constraints.js`，逐条验证约束覆盖
+7. **CONSTRAINT-MAP** — 运行 `node "${CLAUDE_PLUGIN_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"/scripts/verify-constraints.js`，逐条验证约束的函数存在性（使用环境变量动态定位插件路径，如未设置则自动推断插件根目录）
+8. **CONSTRAINT-BEHAVIOR** — 行为验证：从约束树 `tests` 字段提取测试用例名，确认其在测试文件中实际存在且 PASS（不止验证函数名存在）
+
+### 行为验证说明（CONSTRAINT-BEHAVIOR）
+
+`verify-constraints.js` 在验证函数名存在的基础上，额外执行行为验证：
+
+1. 解析 `constraint-tree.yaml` 中每个 function 的 `tests` 字段
+2. 对每个测试名/描述，在测试文件中 grep 确认存在
+3. 从测试报告提取实际 PASS/FAIL 状态
+4. 如果测试存在但 FAIL，标记为该约束行为未覆盖
+
+此步骤确保"函数存在"≠"约束满足"——只有测试 PASS 才算约束真正被实现。
 
 ### 最终自问
 
@@ -393,6 +536,21 @@ RED (TEST) ──▶ GREEN (IMPL) ──▶ REFACTOR ──▶ 自检 REVIEW ─
 6. **实际测试覆盖率是否达标？（行 >= 80%、分支 >= 75%、函数 >= 80%）**
 
 全部通过才标记完成。
+
+### 经验教训更新（自动）
+
+VERIFY 全部通过后，检查本次会话是否有新的修复模式或注意事项：
+
+1. 检查 git diff 中与测试失败修复/bug 修复相关的提交
+2. 使用 AskUserQuestion 提示用户，获取确认后，按 `templates/lessons-template.md` 结构（Rules to Always Follow 和 Past Mistakes Table）追加到 `tasks/lessons.md`
+3. 追加格式：
+```markdown
+## 新增规则 — {日期}
+- {规则描述}
+- **背景**：{简要描述修复的问题}
+```
+
+若无新发现则跳过。
 
 ---
 
@@ -408,8 +566,11 @@ RED (TEST) ──▶ GREEN (IMPL) ──▶ REFACTOR ──▶ 自检 REVIEW ─
 | PLAN 技术选型不可行/POC 未覆盖 | Explorer (F) | 需要重新验证技术方案 |
 | Security 发现架构级漏洞 | Completer (E) | 需要重新补全安全需求 |
 | 需求变更（用户中途改主意） | Critique (A) | 重新评估变更影响 |
+| Completer 发现大规模缺失 | Critique (structured, D) | 需求结构需要重新评估 |
 | Constraint Extractor 无法生成有效约束树 | Decomposer (C) | 需求树需要重建 |
 | SPEC 产生新的约束需求 | Constraint Extractor | 需要补充约束 |
+| **REVIEW 发现 CRITICAL** | IMPL | 独立审查发现严重问题，需修复后重新审查 |
+| **REVIEW 发现 HIGH x 2+** | IMPL → PLAN | 多高级问题可能需重新设计方案 |
 | 多个阶段同时失败 | 完整诊断 | 生成诊断报告，AskUserQuestion 请求用户决策 |
 
 ### 重试管理
@@ -445,3 +606,31 @@ ELSE:
 ```
 
 > ⚠️ 此计数机制与 `session-save.js` 中的 `RETRY_LIMITS` 配置联动，不同阶段有不同的重试上限。
+
+---
+
+## 需求变更响应流程
+
+**触发条件**: 用户中途修改核心需求（新增/删除/修改功能）
+
+**影响评估**:
+1. 读取当前约束树，计算变更影响范围
+2. 按影响程度分级:
+   - 轻量变更: 仅修改某个约束/函数 → 增量更新约束树
+   - 中等变更: 修改某个功能模块 → 回退到 SPEC/PLAN 重新生成
+   - 重大变更: 核心需求变化 → 回退到 Critique (A) 完整重评
+
+**渐进式回退规则**:
+- 仅约束/函数变化 → 更新约束树 → SKIP 到 TEST/IMPL
+- 功能规范变化 → 重新 SPEC → 更新约束树 → SKIP 到 TEST
+- 模块设计变化 → 重新 PLAN → 更新约束树 → 重新 TEST
+- 需求理解偏差 → Critique (A) → Diverger → Decomposer → 重新生成 SPEC/PLAN/约束树 → 重新 TEST/IMPL
+
+**产物保留规则**:
+- 保留: 01-04 报告中未受变更影响的部分
+- 标记: 受影响的需求 ID，使用 `[CHANGED]` 前缀
+- 重建: 所有受影响的下游产物（SPEC、PLAN、约束树）
+
+**重试计数管理**:
+- 用户主动变更: 重置所有重试计数 (`sddState.retryCounts = {}`)
+- 需求不兼容: 不消耗重试配额

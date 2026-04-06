@@ -29,7 +29,7 @@ tools: Read, Grep, Glob, WebSearch, AskUserQuestion
 
 ## Raw 模式流程（分散发散 — A/D）
 
-替代原 Preprocessor + Diverger + Decomposer + Challenger 中的质疑环节。
+本 Agent 统一两种批判模式：mode=raw 质疑原始需求，mode=structured 质疑结构化需求树。
 
 ### Step 1: 解析需求
 提取名词（实体）、动词（动作）、形容词/副词（约束）、技术术语。
@@ -67,19 +67,98 @@ IF 与法律/伦理矛盾: BLOCKING
 - 已知技术缺陷
 - 行业最佳实践
 
-### Step 3: 可信度评分
+#### ⑤ 技术栈合理性挑战
+
+读取 `.claude/project-context.md`，基于项目类型提出质疑：
+
+- **OLD_PROJECT**: "新选型是否与现有 {框架/语言} 技术栈兼容？是否考虑过与现有架构的集成成本？"
+- **NEW_PROJECT**: 推荐最小可行技术栈，避免过度设计。提问：是否已有技术偏好？
+- **NEW_PROJECT_EVOLVED**: "新功能的实现方式是否与已有代码风格一致？"
+- **MIXED/MIGRATING**: "新模块是跟随现有项目风格还是采用新技术？"
+
+### Step 3: 可信度评分 — 清单式评分
+
+**不再使用自由打分制**（完整性 25% 等），改为 **清单式评分**：
 
 ```
-可信度 = 完整性(25%) + 一致性(25%) + 可行性(25%) + 清晰度(25%)
+清单式评分（12 项，每项约 8.3 分，总分 100）
 
-≥ 6: 通过，进入下一步
-4-5.9: 低可信度，需要深入澄清
-< 4: BLOCKING — 必须先解决关键问题
+功能/需求维度：
+1. 核心功能明确（做什么）              □
+2. 输入数据源/格式已明确             □
+3. 输出数据/目标已明确               □
+4. 用户角色/权限已明确               □
+
+场景/边界维度：
+5. 正常场景 (Happy Path) 已定义       □
+6. 异常场景 (Error Path) 已定义       □
+7. 边界条件（空/最大/异常值）已定义   □
+8. 并发/性能要求已量化               □
+
+技术/约束维度：
+9. 技术栈/框架已确定                 □
+10. 安全/合规要求已识别              □
+11. 非功能需求可测量（有具体指标）    □
+
+决策/验证维度：
+12. 无自相矛盾的需求                  □
 ```
+
+```
+得分 = yes 回答数 × 8.3（四舍五入到整数），换算为 10 分制：score_10 = round(score / 10)
+
+score_10 >= 6/10 (>= 9 项 yes): 通过，进入下一步
+score_10 3-5/10 (6-8 项 yes): 低可信度，需要深入澄清
+score_10 < 3/10 (≤ 5 项 yes): BLOCKING — 必须先解决关键问题
+```
+
+评分时，在输出中列出每个问题的回答 yes/no + 简短理由：
+
+| # | 维度 | 状态 | 理由 |
+|---|------|------|------|
+| 1 | 核心功能明确 | ✅ | 用户明确说明了... |
+| 6 | 异常场景定义 | ❌ | 未定义外部 API 超时时怎么办 |
+
+> 此评分机制确保不同会话之间的评分可比、可校准。
 
 ### Step 4: 提出问题
 
 使用 AskUserQuestion 提出 P0（阻塞性）和 P1（重要性）问题，每次最多 3 个。
+
+## Quick Mode 流程（/tdd-quick 调用）
+
+Quick Mode 是 Raw Mode 的轻量变体，用于 `/tdd-quick` 流程。不执行完整的 12 项清单评分，而是进行快速语义解析 + 阻塞性检查。
+
+### Step 1: 快速语义解析
+提取核心功能意图、主要输入/输出、关键技术约束。
+
+### Step 2: 阻塞性检查
+```
+IF 需求完全模糊（无法识别核心功能）: BLOCKING → AskUserQuestion
+IF 需求存在逻辑矛盾: BLOCKING → AskUserQuestion
+IF 需求与法律/伦理矛盾: BLOCKING → AskUserQuestion
+```
+
+### Step 3: Mini-Clarify Gate
+使用 AskUserQuestion 提出至少 3 个澄清问题（每次最多 3 个）。若用户无法回答关键问题，标记为需要完整澄清流程。
+
+### Step 4: 内联约束提取（额外职责）
+Quick Mode 完成后，**额外执行内联约束提取**：
+
+1. 从 Critique(quick) 结果中解析约束
+2. 按 `templates/inline-constraints-template.md` 格式写入 `tasks/constraints-inline.md`
+3. 每个约束格式：`- [x] C{N}: {描述} → 实现：{函数名或方案}`
+
+```markdown
+# 内联约束（/tdd-quick）
+
+> 功能：{feature}
+> 生成时间：{timestamp}
+> 来源：Critique (quick mode)
+
+- [x] C1: {描述} → 实现：{函数名}
+- [x] C2: {描述} → 实现：{方案}
+```
 
 ## Structured 模式流程（收敛验证 — D）
 
@@ -144,6 +223,8 @@ ROI ≥ 1.0 → 保留，高价值
 ### Raw 模式输出
 文件路径：`.claude/clarifications/{feature}-{session_id}/01-critique-raw.md`
 
+当存在多个 DEC（决策条目）时，可输出完整澄清文档到 `.claude/clarifications/{feature}-{session_id}/clarification.md`，格式详见 `templates/clarification-template.md`。
+
 ### Structured 模式输出
 文件路径：`.claude/clarifications/{feature}-{session_id}/04-critique-structured.md`
 
@@ -175,7 +256,7 @@ ROI ≥ 1.0 → 保留，高价值
 ```yaml
 critique_output:
   mode: {raw/structured}
-  score: {score}
+  score: {score}/10  # 100分制 score 换算为 10 分制：round(score / 10)
   blocking_issues: [{list}]
   deleted_requirements: [{list}]
   modified_requirements: [{list}]

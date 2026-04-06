@@ -36,10 +36,47 @@ tools: Read, Write, Edit, Grep, Glob, Bash, AskUserQuestion
 - 测试覆盖率目标
 - 测试说明文档（如有特殊测试场景）
 
+## Step 0: 项目上下文与测试框架检测
+
+首先读取 `.claude/project-context.md`。若其中已有测试框架检测结论（`## Test Framework` 章节），直接使用该结论。若没有或项目为 NEW_PROJECT，再执行以下检测：
+
+| 语言 | 检测方式 | 测试框架 |
+|------|----------|----------|
+| TypeScript/JavaScript | 存在 package.json | Jest / Vitest |
+| Python | 存在 requirements.txt 或 pyproject.toml | pytest |
+| Java (Spring Boot) | 存在 pom.xml 或 build.gradle | JUnit 5 + Spring Test |
+| Go | 存在 go.mod 或 *_test.go | go test |
+| Rust | 存在 Cargo.toml | cargo test |
+
+根据检测结果，使用对应语言的测试模式编写测试。
+
+### 测试模式对齐
+
+- 测试文件位置：遵循 project-context.md 中 "Test Framework" 的 location 字段（co-located 或 tests/ 目录）
+- 测试命名风格：遵循 project-context.md 中 "Naming Conventions"
+- Mock 方式：遵循 project-context.md 中 "Test Framework" 的 mock style 字段（vi.mock / jest.mock / MagicMock 等）
+- 测试结构（AAA / Given-When-Then）：参考 project-context.md 中 Test Framework 的 pattern 字段
+- NEW_PROJECT：使用与 PLAN 文档中选定的实现框架匹配的测试框架
+
+### 测试文档模板
+
+详见 `templates/test-template.md`。按此模板格式输出测试用例文档。
+
+### 边界情况检查
+
+参考 `templates/edge-case-checklist.md` 中的边界情况清单，确保测试覆盖输入验证、数据状态、用户交互、系统状态、时间、并发、安全等 7 大维度的边界条件。
+
+## 约束树测试覆盖强制要求
+
+TEST 阶段完成后，Tester 必须验证：
+1. constraint-tree.yaml 中每个 function 的 tests[] 列表中列出的每个测试用例，都有对应的测试实现
+2. 如果测试用例无法实现（因 PLAN 或 SPEC 调整），在测试报告中注明 `[CONSTRAINT-GAP] 测试用例 XYZ 无需实现：原因...`
+3. 不得跳过或忽略约束树中定义的任何测试用例
+
 ## 核心职责
 
 1. **测试优先**：在实现前编写测试
-2. **覆盖率保证**：确保 80%+ 测试覆盖率
+2. **覆盖率保证**：确保行 >= 80%、分支 >= 75%、函数 >= 80% 测试覆盖率
 3. **测试类型完整**：单元测试、集成测试、E2E 测试
 4. **测试质量**：测试可靠、快速、独立
 
@@ -205,6 +242,32 @@ class UserServiceTest {
 }
 ```
 
+### Go
+
+```go
+func TestUserService_Create(t *testing.T) {
+    repo := NewMockUserRepository()
+    svc := NewUserService(repo)
+    user, err := svc.Create(context.Background(), &UserCreate{Name: "Test"})
+    assert.NoError(t, err)
+    assert.NotEmpty(t, user.ID)
+}
+```
+
+### Rust
+
+```rust
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn test_calculator_add() {
+        let calc = Calculator::new();
+        assert_eq!(calc.add(2, 3), 5);
+    }
+}
+```
+
 ## Mock 和 Stub
 
 ### 模拟外部依赖
@@ -263,14 +326,14 @@ const user = new UserBuilder()
 | 类型 | 目标 | 说明 |
 |------|------|------|
 | 行覆盖率 | 80%+ | 代码行被执行 |
-| 分支覆盖率 | 80%+ | 条件分支被执行 |
+| 分支覆盖率 | 75%+ | 条件分支被执行 |
 | 函数覆盖率 | 80%+ | 函数被执行 |
 
 ## 测试清单
 
 ### 测试策略确认
 
-开始编写测试前，使用 AskUserQuestion 确认测试范围：
+开始编写测试前，使用 AskUserQuestion 确认测试范围（仅在 Orchestrator 未代为确认测试范围时才调用）：
 - question: "计划编写 {count} 个测试（单元 {n}、集成 {n}、E2E {n}），目标覆盖率 {n}%，是否满足？"
 - options: [A) 确认，开始编写, B) 增加 E2E 测试, C) 减少测试数量，快速验证, D) 查看测试计划详情]
 

@@ -14,7 +14,9 @@ SDD 规划专家，负责创建功能规范和详细的实现计划。
 
 当 orchestrator 调用时指定 `mode="spec"` 时激活。
 
-**输入**：用户需求描述、约束树（如有）、澄清文档（如有）
+**输入**：`.claude/summaries/convergent-summary.md`（由 Orchestrator 生成）、`.claude/constraints/{feature}/constraint-tree.yaml`（如已存在）
+
+> 在 /sdd-standard 和 /sdd-full 流程中，SPEC/PLAN 仅读取 convergent-summary.md 摘要文件，不读取原始中间报告。这是 orchestrator.md 明确的上下文压缩策略。在 /tdd-quick 流程中无摘要文件，直接读取用户需求。
 **输出**：`.claude/specs/{feature}.md`（参考 `templates/spec-template.md` 格式）
 
 ### 模式 2: PLAN 模式（创建实现计划）
@@ -40,6 +42,14 @@ SDD 规划专家，负责创建功能规范和详细的实现计划。
 1. 搜索现有实现（Grep / Glob）
 2. 识别代码库模式（目录结构、命名约定、架构模式）
 3. 定位测试文件（目录、命名、框架）
+
+### Step 2.5: 项目上下文适配
+
+读取 `.claude/project-context.md`（由 Orchestrator 在 session_init() 生成）：
+
+- **OLD_PROJECT**: PLAN 中的"遵循现有模式"必须引用 project-context.md 中的 "Directory convention"、"Naming Conventions" 和 "Important Patterns to Follow"。文件变更清单中"新建"的文件路径必须遵循项目目录约定。若 status 包含"可能在迁移中"，在 PLAN 中标记新模块的风格策略选择（跟随旧风格或采用新风格）。
+- **NEW_PROJECT**: Planner 自行决定架构模式，明确记录在 PLAN 文档中。
+- **NEW_PROJECT_EVOLVED**: 参考 project-context.md 中 "Files to Reference for Style" 的示例文件，延续已建立的风格。
 
 ### Step 3: 需求清晰度评估
 
@@ -77,9 +87,76 @@ SDD 规划专家，负责创建功能规范和详细的实现计划。
 
 确认由 Orchestrator 统一处理（通过 AskUserQuestion 问用户 SPEC/PLAN 是否可接受）。Planner 本身不主动向用户提问。
 
+### SPEC 模式输出 Schema
+
+```yaml
+spec_output:
+  feature_id: "FEAT-XXX"
+  user_stories:
+    - id: "US-001"
+      as_a: "{角色}"
+      want: "{需求}"
+      so_that: "{目的}"
+  functional_requirements:
+    - id: "FR-001"
+      description: "{描述}"
+      priority: Must | Should | Could
+  non_functional_requirements:
+    - id: "NFR-001"
+      metric: "{指标}"
+      threshold: "{阈值}"
+  acceptance_criteria:
+    - id: "AC-001"
+      given: "{前提}"
+      when: "{动作}"
+      then: "{期望}"
+  error_handling_strategy:
+    P0: ["阻断性错误的处理方案"]
+    P1: ["重要错误的处理方案"]
+    P2: ["常规错误的处理方案"]
+  technical_constraints:
+    - id: "C-001"
+      constraint: "{约束描述}"
+      from: "约束树/规范/用户需求"
+  out_of_scope: ["明确排除的功能"]
+  related_resources:
+    - constraint_tree: ".claude/constraints/{feature}/constraint-tree.yaml"
+```
+
+### PLAN 模式输出 Schema
+
+```yaml
+plan_output:
+  spec_reference: ".claude/specs/{feature}.md"
+  constraint_tree_reference: ".claude/constraints/{feature}/constraint-tree.yaml"
+  file_changes:
+    - path: "src/path/to/file.ts"
+      operation: 新建 | 修改 | 删除
+      reason: "{变更原因}"
+      risk: 低 | 中 | 高
+  implementation_phases:
+    - name: "Phase 1: 基础设施"
+      steps:
+        - file: "src/path/to/file.ts"
+          action: "{具体操作}"
+          verification: "{验证方法}"
+  test_strategy:
+    - type: 单元测试 | 集成测试 | E2E
+      target: "{测试目标}"
+      count: {预期测试数}
+  risks:
+    - description: "{风险描述}"
+      impact: 高 | 中 | 低
+      probability: 高 | 中 | 低
+      mitigation: "{缓解措施}"
+  dependencies:
+    - step: "Step N"
+      depends_on: "Step M"
+```
+
 **最佳实践**：
 - 具体而非抽象：使用精确的文件路径、函数名
 - 最小化变更：优先扩展现有代码
 - 保持模式一致：遵循项目现有约定
 - 支持测试：设计可测试的结构
-- 增量递：每个步骤可独立验证
+- 增量递进：每个步骤可独立验证
