@@ -25,7 +25,6 @@
     "lessons-learned"
   ],
   "mcpServers": "./.mcp.json",
-  "hooks": "./hooks/hooks.json",
   "userConfig": {
     "defaultFlow": {
       "type": "string",
