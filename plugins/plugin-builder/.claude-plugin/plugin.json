@@ -1,0 +1,11 @@
+{
+  "name": "plugin-builder",
+  "version": "1.0.0",
+  "description": "交互式插件构建器，通过问答流程快速创建 Claude Code 插件",
+  "author": {
+    "name": "yuzq",
+    "email": "yuzqmr@foxmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["plugin", "builder", "scaffold", "generator", "interactive"]
+}

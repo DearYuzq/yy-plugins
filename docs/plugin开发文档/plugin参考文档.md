@@ -12,7 +12,7 @@
 
 本参考提供了 Claude Code 插件系统的完整技术规范，包括组件架构、CLI 命令和开发工具。
 
-**plugin** 是一个自包含的组件目录，用于扩展 Claude Code 的自定义功能。插件组件包括 skills、agents、hooks、MCP servers 和 LSP servers。
+**plugin** 是一个自包含的组件目录，用于扩展 Claude Code 的自定义功能。插件组件包括 skills、agents、hooks、MCP servers、LSP servers 和 monitors。
 
 ## Plugin 组件参考
 
@@ -26,7 +26,7 @@ Plugins 向 Claude Code 添加 skills，创建可由您或 Claude 调用的 `/na
 
 **Skill 结构**：
 
-```text  theme={null}
+```text theme={null}
 skills/
 ├── pdf-processor/
 │   ├── SKILL.md
@@ -54,7 +54,7 @@ Plugins 可以为特定任务提供专门的 subagents，Claude 可以在适当�
 
 **Agent 结构**：
 
-```markdown  theme={null}
+```markdown theme={null}
 ---
 name: agent-name
 description: 该 agent 的专长以及 Claude 应何时调用它
@@ -88,7 +88,7 @@ Plugins 可以提供事件处理程序，自动响应 Claude Code 事件。
 
 **Hook 配置**：
 
-```json  theme={null}
+```json theme={null}
 {
   "hooks": {
     "PostToolUse": [
@@ -114,6 +114,7 @@ Plugin hooks 响应与[用户定义的 hooks](/zh-CN/hooks)相同的生命周期
 | `UserPromptSubmit`   | When you submit a prompt, before Claude processes it                                                                                                   |
 | `PreToolUse`         | Before a tool call executes. Can block it                                                                                                              |
 | `PermissionRequest`  | When a permission dialog appears                                                                                                                       |
+| `PermissionDenied`   | When a tool call is denied by the auto mode classifier. Return `{retry: true}` to tell the model it may retry the denied tool call                     |
 | `PostToolUse`        | After a tool call succeeds                                                                                                                             |
 | `PostToolUseFailure` | After a tool call fails                                                                                                                                |
 | `Notification`       | When Claude Code sends a notification                                                                                                                  |
@@ -153,7 +154,7 @@ Plugins 可以捆绑 Model Context Protocol (MCP) servers 以将 Claude Code 与
 
 **MCP server 配置**：
 
-```json  theme={null}
+```json theme={null}
 {
   "mcpServers": {
     "plugin-database": {
@@ -199,7 +200,7 @@ LSP 集成提供：
 
 **`.lsp.json` 文件格式**：
 
-```json  theme={null}
+```json theme={null}
 {
   "go": {
     "command": "gopls",
@@ -213,7 +214,7 @@ LSP 集成提供：
 
 **在 `plugin.json` 中内联**：
 
-```json  theme={null}
+```json theme={null}
 {
   "name": "my-plugin",
   "lspServers": {
@@ -264,6 +265,58 @@ LSP 集成提供：
 
 首先安装语言服务器，然后从市场安装 plugin。
 
+### Monitors
+
+Plugins 可以声明后台 monitors，Claude Code 在 plugin 激活时自动启动。每个 monitor 为会话的生命周期运行一个 shell 命令，并将每个 stdout 行作为通知传递给 Claude，以便 Claude 可以对日志条目、状态更改或轮询事件做出反应，而无需被要求启动监视本身。
+
+Plugin monitors 使用与[Monitor tool](/zh-CN/tools-reference#monitor-tool)相同的机制，并共享其可用性约束。它们仅在交互式 CLI 会话中运行，在与[hooks](#hooks)相同的信任级别上无沙箱运行，并在 Monitor tool 不可用的主机上跳过。
+
+<Note>
+  Plugin monitors 需要 Claude Code v2.1.105 或更高版本。
+</Note>
+
+**位置**：插件根目录中的 `monitors/monitors.json`，或在 plugin.json 中内联
+
+**格式**：监视器条目的 JSON 数组
+
+以下 `monitors/monitors.json` 监视部署状态端点和本地错误日志：
+
+```json theme={null}
+[
+  {
+    "name": "deploy-status",
+    "command": "${CLAUDE_PLUGIN_ROOT}/scripts/poll-deploy.sh ${user_config.api_endpoint}",
+    "description": "Deployment status changes"
+  },
+  {
+    "name": "error-log",
+    "command": "tail -F ./logs/error.log",
+    "description": "Application error log",
+    "when": "on-skill-invoke:debug"
+  }
+]
+```
+
+要内联声明 monitors，请将 `plugin.json` 中的 `monitors` 键设置为相同的数组。要从非默认路径加载，请将 `monitors` 设置为相对路径字符串，例如 `"./config/monitors.json"`。
+
+**必需字段：**
+
+| 字段            | 描述                                     |
+| :------------ | :------------------------------------- |
+| `name`        | 在插件中唯一的标识符。防止插件重新加载或再次调用 skill 时出现重复进程 |
+| `command`     | 在会话工作目录中作为持久后台进程运行的 shell 命令           |
+| `description` | 正在监视的内容的简短摘要。显示在任务面板和通知摘要中             |
+
+**可选字段：**
+
+| 字段     | 描述                                                                                                          |
+| :----- | :---------------------------------------------------------------------------------------------------------- |
+| `when` | 控制 monitor 何时启动。`"always"` 在会话启动和插件重新加载时启动它，这是默认值。`"on-skill-invoke:<skill-name>"` 在此插件中的命名 skill 首次被分派时启动它 |
+
+`command` 值支持与 MCP 和 LSP server 配置相同的[变量替换](#environment-variables)：`${CLAUDE_PLUGIN_ROOT}`、`${CLAUDE_PLUGIN_DATA}`、`${user_config.*}` 和环境中的任何 `${ENV_VAR}`。如果脚本需要从插件自己的目录运行，请在命令前加上 `cd "${CLAUDE_PLUGIN_ROOT}" && `。
+
+在会话中途禁用插件不会停止已在运行的 monitors。它们在会话结束时停止。
+
 ***
 
 ## Plugin 安装范围
@@ -289,7 +342,7 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
 
 ### 完整架构
 
-```json  theme={null}
+```json theme={null}
 {
   "name": "plugin-name",
   "version": "1.2.0",
@@ -303,13 +356,18 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
   "repository": "https://github.com/author/plugin",
   "license": "MIT",
   "keywords": ["keyword1", "keyword2"],
+  "skills": "./custom/skills/",
   "commands": ["./custom/commands/special.md"],
   "agents": "./custom/agents/",
-  "skills": "./custom/skills/",
   "hooks": "./config/hooks.json",
   "mcpServers": "./mcp-config.json",
   "outputStyles": "./styles/",
-  "lspServers": "./.lsp.json"
+  "lspServers": "./.lsp.json",
+  "monitors": "./monitors.json",
+  "dependencies": [
+    "helper-lib",
+    { "name": "secrets-vault", "version": "~2.1.0" }
+  ]
 }
 ```
 
@@ -337,23 +395,25 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
 
 ### 组件路径字段
 
-| 字段             | 类型                    | 描述                                                                                                     | 示例                                    |
-| :------------- | :-------------------- | :----------------------------------------------------------------------------------------------------- | :------------------------------------ |
-| `commands`     | string\|array         | 其他命令文件/目录                                                                                              | `"./custom/cmd.md"` 或 `["./cmd1.md"]` |
-| `agents`       | string\|array         | 其他 agent 文件                                                                                            | `"./custom/agents/reviewer.md"`       |
-| `skills`       | string\|array         | 其他 skill 目录                                                                                            | `"./custom/skills/"`                  |
-| `hooks`        | string\|array\|object | Hook 配置路径或内联配置                                                                                         | `"./my-extra-hooks.json"`             |
-| `mcpServers`   | string\|array\|object | MCP 配置路径或内联配置                                                                                          | `"./my-extra-mcp-config.json"`        |
-| `outputStyles` | string\|array         | 其他输出样式文件/目录                                                                                            | `"./styles/"`                         |
-| `lspServers`   | string\|array\|object | [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) 配置用于代码智能（转到定义、查找引用等） | `"./.lsp.json"`                       |
-| `userConfig`   | object                | 用户可配置的值，在启用时提示。请参阅[用户配置](#user-configuration)                                                          | 见下文                                   |
-| `channels`     | array                 | 消息注入的频道声明（Telegram、Slack、Discord 风格）。请参阅[Channels](#channels)                                          | 见下文                                   |
+| 字段             | 类型                    | 描述                                                                                                     | 示例                                                   |
+| :------------- | :-------------------- | :----------------------------------------------------------------------------------------------------- | :--------------------------------------------------- |
+| `skills`       | string\|array         | 包含 `<name>/SKILL.md` 的自定义 skill 目录（替换默认 `skills/`）                                                     | `"./custom/skills/"`                                 |
+| `commands`     | string\|array         | 自定义平面 `.md` skill 文件或目录（替换默认 `commands/`）                                                              | `"./custom/cmd.md"` 或 `["./cmd1.md"]`                |
+| `agents`       | string\|array         | 自定义 agent 文件（替换默认 `agents/`）                                                                           | `"./custom/agents/reviewer.md"`                      |
+| `hooks`        | string\|array\|object | Hook 配置路径或内联配置                                                                                         | `"./my-extra-hooks.json"`                            |
+| `mcpServers`   | string\|array\|object | MCP 配置路径或内联配置                                                                                          | `"./my-extra-mcp-config.json"`                       |
+| `outputStyles` | string\|array         | 自定义输出样式文件/目录（替换默认 `output-styles/`）                                                                    | `"./styles/"`                                        |
+| `lspServers`   | string\|array\|object | [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) 配置用于代码智能（转到定义、查找引用等） | `"./.lsp.json"`                                      |
+| `monitors`     | string\|array         | 后台[Monitor](/zh-CN/tools-reference#monitor-tool)配置，在 plugin 激活时自动启动。请参阅[Monitors](#monitors)           | `"./monitors.json"`                                  |
+| `userConfig`   | object                | 用户可配置的值，在启用时提示。请参阅[用户配置](#user-configuration)                                                          | 见下文                                                  |
+| `channels`     | array                 | 消息注入的频道声明（Telegram、Slack、Discord 风格）。请参阅[Channels](#channels)                                          | 见下文                                                  |
+| `dependencies` | array                 | 此 plugin 需要的其他 plugins，可选择带有 semver 版本约束。请参阅[约束 plugin 依赖版本](/zh-CN/plugin-dependencies)               | `[{ "name": "secrets-vault", "version": "~2.1.0" }]` |
 
 ### 用户配置
 
 `userConfig` 字段声明了 Claude Code 在启用插件时提示用户的值。使用此字段而不是要求用户手动编辑 `settings.json`。
 
-```json  theme={null}
+```json theme={null}
 {
   "userConfig": {
     "api_endpoint": {
@@ -368,7 +428,7 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
 }
 ```
 
-键必须是有效的标识符。每个值都可用于在 MCP 和 LSP server 配置、hook 命令以及（仅对非敏感值）skill 和 agent 内容中作为 `${user_config.KEY}` 进行替换。值也会作为 `CLAUDE_PLUGIN_OPTION_<KEY>` 环境变量导出到插件子进程。
+键必须是有效的标识符。每个值都可用于在 MCP 和 LSP server 配置、hook 命令、monitor 命令以及（仅对非敏感值）skill 和 agent 内容中作为 `${user_config.KEY}` 进行替换。值也会作为 `CLAUDE_PLUGIN_OPTION_<KEY>` 环境变量导出到插件子进程。
 
 非敏感值存储在 `settings.json` 中的 `pluginConfigs[<plugin-id>].options` 下。敏感值进入系统钥匙链（或在钥匙链不可用的地方进入 `~/.claude/.credentials.json`）。钥匙链存储与 OAuth 令牌共享，总限制约为 2 KB，因此请保持敏感值较小。
 
@@ -376,7 +436,7 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
 
 `channels` 字段允许插件声明一个或多个消息频道，将内容注入到对话中。每个频道绑定到插件提供的 MCP server。
 
-```json  theme={null}
+```json theme={null}
 {
   "channels": [
     {
@@ -394,16 +454,17 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
 
 ### 路径行为规则
 
-**重要**：自定义路径补充默认目录 - 它们不替换默认目录。
+对于 `skills`、`commands`、`agents`、`outputStyles` 和 `monitors`，自定义路径替换默认值。如果清单指定 `skills`，则不会扫描默认 `skills/` 目录；如果指定 `monitors`，则不会加载默认 `monitors/monitors.json`。[Hooks](#hooks)、[MCP servers](#mcp-servers) 和[LSP servers](#lsp-servers)对处理多个源有不同的语义。
 
-* 如果 `commands/` 存在，除了自定义命令路径外，它也会被加载
 * 所有路径必须相对于 plugin 根目录，并以 `./` 开头
-* 来自自定义路径的命令使用相同的命名和命名空间规则
-* 可以将多个路径指定为数组以获得灵活性
+* 来自自定义路径的组件使用相同的命名和命名空间规则
+* 可以将多个路径指定为数组
+* 要保留默认目录并为 skills、commands、agents 或 output styles 添加更多路径，请在数组中包含默认值：`"skills": ["./skills/", "./extras/"]`
+* 当 skill 路径指向直接包含 `SKILL.md` 的目录时，例如 `"skills": ["./"]` 指向插件根目录，frontmatter 中的 `name` 字段确定 skill 的调用名称。这提供了一个稳定的名称，无论安装目录如何。如果 frontmatter 中未设置 `name`，则使用目录基名作为后备。
 
 **路径示例**：
 
-```json  theme={null}
+```json theme={null}
 {
   "commands": [
     "./specialized/deploy.md",
@@ -418,13 +479,13 @@ Plugins 使用与其他 Claude Code 配置相同的范围系统。有关安装�
 
 ### 环境变量
 
-Claude Code 提供两个变量用于引用插件路径。两者都在 skill 内容、agent 内容、hook 命令以及 MCP 或 LSP server 配置中出现的任何地方进行内联替换。两者也都作为环境变量导出到 hook 进程和 MCP 或 LSP server 子进程。
+Claude Code 提供两个变量用于引用插件路径。两者都在 skill 内容、agent 内容、hook 命令、monitor 命令以及 MCP 或 LSP server 配置中出现的任何地方进行内联替换。两者也都作为环境变量导出到 hook 进程和 MCP 或 LSP server 子进程。
 
 **`${CLAUDE_PLUGIN_ROOT}`**：插件安装目录的绝对路径。使用此路径引用与插件捆绑的脚本、二进制文件和配置文件。当插件更新时，此路径会更改，因此您在此处写入的文件不会在更新后保留。
 
 **`${CLAUDE_PLUGIN_DATA}`**：用于插件状态的持久目录，在更新后保留。使用此目录用于已安装的依赖项，如 `node_modules` 或 Python 虚拟环境、生成的代码、缓存以及任何应在插件版本之间保留的其他文件。首次引用此变量时，目录会自动创建。
 
-```json  theme={null}
+```json theme={null}
 {
   "hooks": {
     "PostToolUse": [
@@ -449,7 +510,7 @@ Claude Code 提供两个变量用于引用插件路径。两者都在 skill 内�
 
 此 `SessionStart` hook 在第一次运行时安装 `node_modules`，并在插件更新包含更改的 `package.json` 时再次安装：
 
-```json  theme={null}
+```json theme={null}
 {
   "hooks": {
     "SessionStart": [
@@ -470,7 +531,7 @@ Claude Code 提供两个变量用于引用插件路径。两者都在 skill 内�
 
 捆绑在 `${CLAUDE_PLUGIN_ROOT}` 中的脚本可以针对持久的 `node_modules` 运行：
 
-```json  theme={null}
+```json theme={null}
 {
   "mcpServers": {
     "routines": {
@@ -497,20 +558,23 @@ Plugins 通过以下两种方式之一指定：
 
 出于安全和验证目的，Claude Code 将\_市场\_ plugins 复制到用户的本地 **plugin 缓存**（`~/.claude/plugins/cache`），而不是就地使用它们。在开发引用外部文件的 plugins 时，理解此行为很重要。
 
+每个已安装的版本是缓存中的单独目录。当您更新或卸载 plugin 时，前一个版本目录被标记为孤立，并在 7 天后自动删除。宽限期允许已加载旧版本的并发 Claude Code 会话继续运行而不出错。
+
+Claude 的 Glob 和 Grep 工具在搜索期间跳过孤立版本目录，因此文件结果不包括过时的插件代码。
+
 ### 路径遍历限制
 
 已安装的 plugins 无法引用其目录外的文件。遍历 plugin 根目录外的路径（例如 `../shared-utils`）在安装后将不起作用，因为这些外部文件不会被复制到缓存中。
 
 ### 使用外部依赖
 
-如果您的 plugin 需要访问其目录外的文件，您可以在 plugin 目录中创建指向外部文件的符号链接。在复制过程中会遵守符号链接：
+如果您的 plugin 需要访问其目录外的文件，您可以在 plugin 目录中创建指向外部文件的符号链接。符号链接在缓存中被保留而不是解引用，并在运行时解析到其目标。以下命令在插件目录内创建指向共享实用程序位置的链接：
 
-```bash  theme={null}
-# 在您的 plugin 目录内
+```bash theme={null}
 ln -s /path/to/shared-utils ./shared-utils
 ```
 
-符号链接的内容将被复制到 plugin 缓存中。这在保持缓存系统安全优势的同时提供了灵活性。
+这在保持缓存系统安全优势的同时提供了灵活性。
 
 ***
 
@@ -520,26 +584,32 @@ ln -s /path/to/shared-utils ./shared-utils
 
 完整的 plugin 遵循此结构：
 
-```text  theme={null}
+```text theme={null}
 enterprise-plugin/
 ├── .claude-plugin/           # 元数据目录（可选）
 │   └── plugin.json             # plugin 清单
-├── commands/                 # 默认命令位置
-│   ├── status.md
-│   └── logs.md
-├── agents/                   # 默认 agent 位置
-│   ├── security-reviewer.md
-│   ├── performance-tester.md
-│   └── compliance-checker.md
-├── skills/                   # Agent Skills
+├── skills/                   # Skills
 │   ├── code-reviewer/
 │   │   └── SKILL.md
 │   └── pdf-processor/
 │       ├── SKILL.md
 │       └── scripts/
+├── commands/                 # Skills 作为平面 .md 文件
+│   ├── status.md
+│   └── logs.md
+├── agents/                   # Subagent 定义
+│   ├── security-reviewer.md
+│   ├── performance-tester.md
+│   └── compliance-checker.md
+├── output-styles/            # 输出样式定义
+│   └── terse.md
+├── monitors/                 # 后台 monitor 配置
+│   └── monitors.json
 ├── hooks/                    # Hook 配置
 │   ├── hooks.json           # 主 hook 配置
 │   └── security-hooks.json  # 其他 hooks
+├── bin/                      # 添加到 PATH 的 plugin 可执行文件
+│   └── my-tool               # 在 Bash tool 中可作为裸命令调用
 ├── settings.json            # plugin 的默认设置
 ├── .mcp.json                # MCP server 定义
 ├── .lsp.json                # LSP server 配置
@@ -552,21 +622,24 @@ enterprise-plugin/
 ```
 
 <Warning>
-  `.claude-plugin/` 目录包含 `plugin.json` 文件。所有其他目录（commands/、agents/、skills/、hooks/）必须在 plugin 根目录，而不是在 `.claude-plugin/` 内。
+  `.claude-plugin/` 目录包含 `plugin.json` 文件。所有其他目录（commands/、agents/、skills/、output-styles/、monitors/、hooks/）必须在 plugin 根目录，而不是在 `.claude-plugin/` 内。
 </Warning>
 
 ### 文件位置参考
 
-| 组件              | 默认位置                         | 目的                                                     |
-| :-------------- | :--------------------------- | :----------------------------------------------------- |
-| **清单**          | `.claude-plugin/plugin.json` | Plugin 元数据和配置（可选）                                      |
-| **命令**          | `commands/`                  | Skill Markdown 文件（遗留；新 skills 使用 `skills/`）            |
-| **Agents**      | `agents/`                    | Subagent Markdown 文件                                   |
-| **Skills**      | `skills/`                    | 具有 `<name>/SKILL.md` 结构的 Skills                        |
-| **Hooks**       | `hooks/hooks.json`           | Hook 配置                                                |
-| **MCP servers** | `.mcp.json`                  | MCP server 定义                                          |
-| **LSP servers** | `.lsp.json`                  | 语言服务器配置                                                |
-| **设置**          | `settings.json`              | 启用 plugin 时应用的默认配置。目前仅支持[`agent`](/zh-CN/sub-agents)设置 |
+| 组件                | 默认位置                         | 目的                                                                                                                    |
+| :---------------- | :--------------------------- | :-------------------------------------------------------------------------------------------------------------------- |
+| **清单**            | `.claude-plugin/plugin.json` | Plugin 元数据和配置（可选）                                                                                                     |
+| **Skills**        | `skills/`                    | 具有 `<name>/SKILL.md` 结构的 Skills                                                                                       |
+| **Commands**      | `commands/`                  | Skills 作为平面 Markdown 文件。新 plugins 使用 `skills/`                                                                        |
+| **Agents**        | `agents/`                    | Subagent Markdown 文件                                                                                                  |
+| **Output styles** | `output-styles/`             | 输出样式定义                                                                                                                |
+| **Hooks**         | `hooks/hooks.json`           | Hook 配置                                                                                                               |
+| **MCP servers**   | `.mcp.json`                  | MCP server 定义                                                                                                         |
+| **LSP servers**   | `.lsp.json`                  | 语言服务器配置                                                                                                               |
+| **Monitors**      | `monitors/monitors.json`     | 后台 monitor 配置                                                                                                         |
+| **Executables**   | `bin/`                       | 添加到 Bash tool 的 `PATH` 的可执行文件。此处的文件在 plugin 启用时可作为任何 Bash tool 调用中的裸命令调用                                              |
+| **Settings**      | `settings.json`              | 启用 plugin 时应用的默认配置。目前仅支持[`agent`](/zh-CN/sub-agents)和[`subagentStatusLine`](/zh-CN/statusline#subagent-status-lines)键 |
 
 ***
 
@@ -578,7 +651,7 @@ Claude Code 提供了用于非交互式 plugin 管理的 CLI 命令，对脚本�
 
 从可用市场安装 plugin。
 
-```bash  theme={null}
+```bash theme={null}
 claude plugin install <plugin> [options]
 ```
 
@@ -593,11 +666,11 @@ claude plugin install <plugin> [options]
 | `-s, --scope <scope>` | 安装范围：`user`、`project` 或 `local` | `user` |
 | `-h, --help`          | 显示命令帮助                          |        |
 
-范围确定将已安装的 plugin 添加到哪个设置文件。例如，--scope project 写入 `.claude/settings.json` 中的 `enabledPlugins`，使 plugin 对克隆项目存储库的每个人都可用。
+范围确定将已安装的 plugin 添加到哪个设置文件。例如，`--scope project` 写入 `.claude/settings.json` 中的 `enabledPlugins`，使 plugin 对克隆项目存储库的每个人都可用。
 
 **示例：**
 
-```bash  theme={null}
+```bash theme={null}
 # 安装到用户范围（默认）
 claude plugin install formatter@my-marketplace
 
@@ -612,7 +685,7 @@ claude plugin install formatter@my-marketplace --scope local
 
 删除已安装的 plugin。
 
-```bash  theme={null}
+```bash theme={null}
 claude plugin uninstall <plugin> [options]
 ```
 
@@ -636,7 +709,7 @@ claude plugin uninstall <plugin> [options]
 
 启用已禁用的 plugin。
 
-```bash  theme={null}
+```bash theme={null}
 claude plugin enable <plugin> [options]
 ```
 
@@ -655,7 +728,7 @@ claude plugin enable <plugin> [options]
 
 禁用 plugin 而不卸载它。
 
-```bash  theme={null}
+```bash theme={null}
 claude plugin disable <plugin> [options]
 ```
 
@@ -674,7 +747,7 @@ claude plugin disable <plugin> [options]
 
 将 plugin 更新到最新版本。
 
-```bash  theme={null}
+```bash theme={null}
 claude plugin update <plugin> [options]
 ```
 
@@ -701,7 +774,7 @@ claude plugin update <plugin> [options]
 
 * 正在加载哪些 plugins
 * plugin 清单中的任何错误
-* 命令、agent 和 hook 注册
+* Skill、agent 和 hook 注册
 * MCP server 初始化
 
 ### 常见问题
@@ -709,7 +782,7 @@ claude plugin update <plugin> [options]
 | 问题                                  | 原因                         | 解决方案                                                                                                                            |
 | :---------------------------------- | :------------------------- | :------------------------------------------------------------------------------------------------------------------------------ |
 | Plugin 未加载                          | 无效的 `plugin.json`          | 运行 `claude plugin validate` 或 `/plugin validate` 检查 `plugin.json`、skill/agent/command frontmatter 和 `hooks/hooks.json` 的语法和架构错误 |
-| 命令未出现                               | 目录结构错误                     | 确保 `commands/` 在根目录，而不是在 `.claude-plugin/` 中                                                                                    |
+| Skills 未出现                          | 目录结构错误                     | 确保 `skills/` 或 `commands/` 在根目录，而不是在 `.claude-plugin/` 中                                                                        |
 | Hooks 未触发                           | 脚本不可执行                     | 运行 `chmod +x script.sh`                                                                                                         |
 | MCP server 失败                       | 缺少 `${CLAUDE_PLUGIN_ROOT}` | 对所有 plugin 路径使用变量                                                                                                               |
 | 路径错误                                | 使用了绝对路径                    | 所有路径必须是相对的，并以 `./` 开头                                                                                                           |
@@ -761,11 +834,11 @@ claude plugin update <plugin> [options]
 
 ### 目录结构错误
 
-**症状**：Plugin 加载但组件（命令、agents、hooks）缺失。
+**症状**：Plugin 加载但组件（skills、agents、hooks）缺失。
 
 **正确结构**：组件必须在 plugin 根目录，而不是在 `.claude-plugin/` 内。只有 `plugin.json` 属于 `.claude-plugin/`。
 
-```text  theme={null}
+```text theme={null}
 my-plugin/
 ├── .claude-plugin/
 │   └── plugin.json      ← 仅清单在此处
@@ -790,7 +863,7 @@ my-plugin/
 
 遵循语义版本控制进行 plugin 发布：
 
-```json  theme={null}
+```json theme={null}
 {
   "name": "my-plugin",
   "version": "2.1.0"
@@ -813,7 +886,7 @@ my-plugin/
 <Warning>
   Claude Code 使用版本来确定是否更新您的 plugin。如果您更改了 plugin 的代码但没有在 `plugin.json` 中提升版本，您的 plugin 的现有用户由于缓存而看不到您的更改。
 
-  如果您的 plugin 在[市场](/zh-CN/plugin-marketplaces)目录中，您可以通过 `marketplace.json` 管理版本，而不是从 `plugin.json` 中省略 `version` 字段。
+如果您的 plugin 在[市场](/zh-CN/plugin-marketplaces)目录中，您可以通过 `marketplace.json` 管理版本，而不是从 `plugin.json` 中省略 `version` 字段。
 </Warning>
 
 ***

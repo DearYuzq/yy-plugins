@@ -32,6 +32,18 @@
       },
       "keywords": ["sdd", "tdd", "multi-agent", "orchestration", "clarification", "divergent", "convergent", "red-team", "blue-team", "springboot", "typescript", "python"],
       "category": "development"
+    },
+    {
+      "name": "plugin-builder",
+      "source": "./plugins/plugin-builder",
+      "description": "交互式插件构建器，通过问答流程快速创建 Claude Code 插件",
+      "version": "1.0.0",
+      "author": {
+        "name": "yuzq",
+        "email": "yuzqmr@foxmail.com"
+      },
+      "keywords": ["plugin", "builder", "scaffold", "generator", "interactive"],
+      "category": "development"
     }
   ]
 }
