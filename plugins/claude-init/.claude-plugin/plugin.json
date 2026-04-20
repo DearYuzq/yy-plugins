@@ -1,0 +1,11 @@
+{
+  "name": "claude-init",
+  "version": "1.0.0",
+  "description": "初始化和管理 CLAUDE.md 配置，内置规则模板，支持 git 增量更新",
+  "author": {
+    "name": "yuzq",
+    "email": "yuzqmr@foxmail.com"
+  },
+  "license": "MIT",
+  "keywords": ["claude-md", "initialization", "rules", "project-setup"]
+}
