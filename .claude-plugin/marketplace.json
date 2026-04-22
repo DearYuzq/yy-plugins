@@ -49,7 +49,7 @@
       "name": "claude-init",
       "source": "./plugins/claude-init",
       "description": "初始化和管理 CLAUDE.md 配置，内置场景化规则模板，支持智能推荐和 git 增量更新",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "author": {
         "name": "yuzq",
         "email": "yuzqmr@foxmail.com"
