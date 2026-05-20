@@ -155,21 +155,23 @@ find_screenshots() {
   SCREENSHOTS=""
 
   # 搜索截图目录
-  screenshot_dirs="screenshots img assets public images"
-
-  for dir in $screenshots; do
+  for dir in screenshots img assets public images; do
     if [ -d "$PROJECT_DIR/$dir" ]; then
-      files=$(find "$PROJECT_DIR/$dir" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.webp" \) | head -5)
+      files=$(find "$PROJECT_DIR/$dir" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.webp" \) 2>/dev/null | head -5)
 
       if [ -n "$files" ]; then
         screenshots_json=""
         while IFS= read -r file; do
-          screenshots_json="$screenshots_json\"$file\","
+          if [ -n "$file" ]; then
+            screenshots_json="$screenshots_json\"$file\","
+          fi
         done <<< "$files"
-        SCREENSHOTS="${screens_json%,}"
-        break
+        SCREENSHOTS="${screenshots_json%,}"
+        if [ -n "$SCREENSHOTS" ]; then
+          break
+        fi
       fi
-    done
+    fi
   done
 
   if [ -n "$SCREENSHOTS" ]; then

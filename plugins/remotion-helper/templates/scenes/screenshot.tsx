@@ -14,7 +14,7 @@ import {getAnimationConfig} from '../utils/animation';
 interface ScreenshotProps {
   src: string;             // 截图路径
   caption?: string;        // 说明文字
-  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate';
+  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate' | 'brutalist' | 'editorial' | 'ethereal';
   zoomIn?: boolean;        // 是否缩放展示
 }
 
@@ -51,6 +51,22 @@ const styleConfigs = {
     text: '#172b4d',
     textMuted: '#5e6c84',
     shadow: '0 8px 24px rgba(0, 0, 0, 0.1)',
+  },
+  brutalist: {
+    background: '#0A0A0A',
+    text: '#EAEAEA',
+    textMuted: '#666666',
+  },
+  editorial: {
+    background: '#FFFFFF',
+    text: '#111111',
+    textMuted: '#888888',
+  },
+  ethereal: {
+    background: '#050505',
+    text: '#EAEAEA',
+    textMuted: '#888888',
+    glow: '0 0 40px rgba(0, 217, 255, 0.15)',
   },
 };
 

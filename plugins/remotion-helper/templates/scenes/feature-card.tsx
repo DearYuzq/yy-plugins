@@ -19,7 +19,7 @@ interface Feature {
 
 interface FeatureCardsProps {
   features: Feature[];
-  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate';
+  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate' | 'brutalist' | 'editorial' | 'ethereal';
   staggerDelay?: number;   // 卡片之间延迟帧数
 }
 
@@ -74,6 +74,31 @@ const styleConfigs = {
     primary: '#0052cc',
     border: '#dfe1e6',
     shadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+  },
+  brutalist: {
+    background: '#0A0A0A',
+    cardBg: '#141414',
+    text: '#EAEAEA',
+    textMuted: '#666666',
+    primary: '#E61919',
+    border: '#1A1A1A',
+  },
+  editorial: {
+    background: '#FFFFFF',
+    cardBg: '#FDFBF7',
+    text: '#111111',
+    textMuted: '#666666',
+    primary: '#E61919',
+    border: '#EAEAEA',
+  },
+  ethereal: {
+    background: '#050505',
+    cardBg: 'rgba(255, 255, 255, 0.03)',
+    text: '#EAEAEA',
+    textMuted: '#888888',
+    primary: '#00D9FF',
+    border: 'rgba(255, 255, 255, 0.08)',
+    glow: '0 0 30px rgba(0, 217, 255, 0.15)',
   },
 };
 

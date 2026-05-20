@@ -15,7 +15,7 @@ interface LogoIntroProps {
   logo?: string;           // Logo 图片路径
   title: string;           // 项目名称
   subtitle?: string;       // 副标题/描述
-  style: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate';
+  style: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate' | 'brutalist' | 'editorial' | 'ethereal';
   durationInFrames?: number;
 }
 
@@ -56,6 +56,24 @@ const styleConfigs = {
     text: '#172b4d',
     textMuted: '#5e6c84',
     primary: '#0052cc',
+  },
+  brutalist: {
+    background: '#0A0A0A',
+    text: '#EAEAEA',
+    textMuted: '#666666',
+    primary: '#E61919',
+  },
+  editorial: {
+    background: '#FFFFFF',
+    text: '#111111',
+    textMuted: '#666666',
+    primary: '#E61919',
+  },
+  ethereal: {
+    background: '#050505',
+    text: '#EAEAEA',
+    textMuted: '#888888',
+    primary: '#00D9FF',
   },
 };
 

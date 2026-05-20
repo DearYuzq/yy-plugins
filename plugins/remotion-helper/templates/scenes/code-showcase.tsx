@@ -14,7 +14,7 @@ interface CodeShowcaseProps {
   code: string;            // 代码字符串
   title?: string;          // 标题
   language?: string;       // 语言标识（用于高亮）
-  style?: 'tech' | 'open-source';
+  style?: 'tech' | 'open-source' | 'brutalist' | 'ethereal';
 }
 
 const styleConfigs = {
@@ -35,6 +35,24 @@ const styleConfigs = {
     primary: '#58a6ff',
     accent: '#3fb950',
     border: '#30363d',
+  },
+  brutalist: {
+    background: '#0A0A0A',
+    codeBg: '#141414',
+    text: '#EAEAEA',
+    textMuted: '#666666',
+    primary: '#E61919',
+    accent: '#00FF41',
+    border: '#1A1A1A',
+  },
+  ethereal: {
+    background: '#050505',
+    codeBg: '#0a0a0a',
+    text: '#EAEAEA',
+    textMuted: '#888888',
+    primary: '#00D9FF',
+    accent: '#7B61FF',
+    border: 'rgba(255, 255, 255, 0.08)',
   },
 };
 

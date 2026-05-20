@@ -13,7 +13,7 @@ import {SafeZone} from '../components/SafeZone';
 interface ValuePropProps {
   headline: string;        // 主标题（价值主张）
   description?: string;    // 描述文字
-  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate';
+  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate' | 'brutalist' | 'editorial' | 'ethereal';
   fadeInDuration?: number;
 }
 
@@ -47,6 +47,21 @@ const styleConfigs = {
     background: '#eef2f7',
     text: '#172b4d',
     textMuted: '#5e6c84',
+  },
+  brutalist: {
+    background: '#0A0A0A',
+    text: '#EAEAEA',
+    textMuted: '#666666',
+  },
+  editorial: {
+    background: '#FFFFFF',
+    text: '#111111',
+    textMuted: '#666666',
+  },
+  ethereal: {
+    background: '#050505',
+    text: '#EAEAEA',
+    textMuted: '#888888',
   },
 };
 

@@ -81,6 +81,9 @@ export const entryAnimation: Record<string, SpringConfig> = {
   minimal: {stiffness: 100, damping: 22, mass: 1.2},
   neon: {stiffness: 350, damping: 8, mass: 0.4},
   corporate: {stiffness: 120, damping: 16, mass: 0.8},
+  brutalist: {stiffness: 260, damping: 10, mass: 0.8},
+  editorial: {stiffness: 100, damping: 24, mass: 1.0},
+  ethereal: {stiffness: 80, damping: 26, mass: 1.2},
 };
 
 /**
@@ -93,6 +96,9 @@ export const exitAnimation: Record<string, SpringConfig> = {
   minimal: {stiffness: 60, damping: 25, mass: 2},
   neon: {stiffness: 200, damping: 15, mass: 0.8},
   corporate: {stiffness: 80, damping: 22, mass: 1.2},
+  brutalist: {stiffness: 180, damping: 14, mass: 1.0},
+  editorial: {stiffness: 60, damping: 26, mass: 1.5},
+  ethereal: {stiffness: 50, damping: 28, mass: 1.8},
 };
 
 /**

@@ -1,6 +1,6 @@
 # Remotion Helper
 
-为项目自动生成美观的宣传视频。支持 6 种风格、3 种时长，自动提取项目信息或接收用户提供的素材。
+为项目自动生成美观的宣传视频。支持 9 种风格、3 种时长，自动提取项目信息或接收用户提供的素材。
 
 ## 功能
 
@@ -10,8 +10,9 @@
 
 ```bash
 /project-promo ./my-project                    # 交互式选择
-/project-promo ./my-project --style tech     # 科技风格
+/project-promo ./my-project --style tech       # 科技风格
 /project-promo ./my-project --duration 30      # 30秒视频
+/project-promo ./my-project --style ethereal --duration 60  # 空灵风格60秒
 ```
 
 ## 视频风格
@@ -24,6 +25,9 @@
 | **Minimal** | 大量留白、优雅缓动 | 高端产品、设计 |
 | **Neon** | 霓虹发光、粗体字 | 游戏、潮流产品 |
 | **Corporate** | 浅灰蓝、商务字体 | 企业级、B2B |
+| **Brutalist** | 深黑+强红、无圆角、CRT扫描线 | 数据密集、仪表盘 |
+| **Editorial** | 温暖奶油、编辑衬线、极端比例 | 内容产品、知识库 |
+| **Ethereal** | 深黑+毛玻璃、柔和发光、空灵缓动 | AI工具、高端科技 |
 
 ## 视频时长
 
@@ -48,6 +52,11 @@
 - README.md → 名称、描述、功能
 - package.json → 技术栈、版本
 - 图片目录 → logo、截图
+
+**使用分析脚本**（输出 JSON）：
+```bash
+bash plugins/remotion-helper/scripts/analyze-project.sh ./my-project
+```
 
 用户可补充：
 - 说明手册/文档
@@ -83,9 +92,21 @@ claude plugin enable remotion-helper
 
 ### 检测环境
 
+脚本会自动检测运行环境：
+
 ```bash
+# 从插件目录运行
 bash plugins/remotion-helper/scripts/check-environment.sh
+
+# 或使用 npx（推荐）
+npx -y @remotion/cli --version
 ```
+
+检测内容：
+- Node.js 版本（需要 18+）
+- npm 可用性
+- Remotion CLI（可选）
+- FFmpeg（可选）
 
 ## 目录结构
 
@@ -99,13 +120,16 @@ plugins/remotion-helper/
 │   ├── visual-designer.md        # 视觉设计 Agent
 │   └── animation-choreographer.md # 动画编排 Agent
 ├── templates/
-│   ├── styles/                   # 6 种风格配置
+│   ├── styles/                   # 9 种风格配置
 │   │   ├── tech.tsx
 │   │   ├── saas.tsx
 │   │   ├── open-source.tsx
 │   │   ├── minimal.tsx
 │   │   ├── neon.tsx
-│   │   └── corporate.tsx
+│   │   ├── corporate.tsx
+│   │   ├── brutalist.tsx
+│   │   ├── editorial.tsx
+│   │   └── ethereal.tsx
 │   ├── scenes/                   # 6 种场景模板
 │   │   ├── logo-intro.tsx
 │   │   ├── value-prop.tsx
@@ -117,6 +141,7 @@ plugins/remotion-helper/
 │       ├── fade-slide.ts
 │       └── zoom-pan.ts
 └── scripts/
+    ├── check-environment.sh      # 环境检测脚本
     └── analyze-project.sh        # 项目信息提取脚本
 ```
 

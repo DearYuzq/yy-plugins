@@ -14,7 +14,7 @@ interface CTAOutroProps {
   text: string;            // CTA 主文案
   buttonText?: string;     // 按钮文字
   link?: string;           // 链接/网址
-  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate';
+  style?: 'tech' | 'saas' | 'open-source' | 'minimal' | 'neon' | 'corporate' | 'brutalist' | 'editorial' | 'ethereal';
 }
 
 const styleConfigs = {
@@ -57,6 +57,26 @@ const styleConfigs = {
     text: '#172b4d',
     textMuted: '#5e6c84',
     primary: '#0052cc',
+  },
+  brutalist: {
+    background: '#0A0A0A',
+    text: '#EAEAEA',
+    textMuted: '#666666',
+    primary: '#E61919',
+  },
+  editorial: {
+    background: '#F7F6F3',
+    text: '#111111',
+    textMuted: '#666666',
+    primary: '#E61919',
+  },
+  ethereal: {
+    background: '#050505',
+    text: '#EAEAEA',
+    textMuted: '#888888',
+    primary: '#00D9FF',
+    accent: '#7B61FF',
+    glow: '0 0 30px rgba(0, 217, 255, 0.3)',
   },
 };
 

@@ -126,38 +126,51 @@ Scene 5 (50-60s): CTA + 联系方式
 
 ### Phase 0: 环境检测
 
-在开始项目分析前，先检测运行环境：
+**运行环境检测脚本**（优先）：
+```bash
+bash plugins/remotion-helper/scripts/check-environment.sh
+```
 
-1. **检测 Node.js 版本**
-   ```bash
-   node --version
-   ```
-   - 如果版本 < 18，提示用户升级 Node.js（https://nodejs.org/）
-   - 如果未安装，提示安装 Node.js
+脚本会自动检测：
+- Node.js 版本（需要 18+）
+- npm 可用性
+- Remotion CLI（可选）
+- FFmpeg（可选）
 
-2. **检测 npm**
-   ```bash
-   npm --version
-   ```
-   - npm 通常随 Node.js 安装，如果缺失也提示重新安装
+**处理逻辑**：
+- 如果脚本返回错误（退出码非 0）→ 停止执行并提示用户
+- 如果脚本成功 → 继续执行 Phase 1
 
-3. **检测 Remotion CLI**（可选，因为会自动安装）
-   ```bash
-   npx remotion --version 2>/dev/null || echo "not installed"
-   ```
-   - 如果未安装，提示将在创建视频项目时自动安装
-   - 无需用户手动安装
-
-4. **运行环境检测脚本**
-   ```bash
-   bash plugins/remotion-helper/scripts/check-environment.sh
-   ```
-   - 如果脚本返回错误，停止执行并返回错误信息
-   - 如果环境满足要求，继续执行
+**备选方案**（如果脚本不存在）：
+```bash
+node --version  # 检测 Node.js
+npm --version   # 检测 npm
+npx remotion --version 2>/dev/null || echo "not installed"
+```
 
 ### Phase 1: 信息收集
 
-1. 扫描项目目录，提取 README.md、package.json
+**运行项目分析脚本**（优先）：
+```bash
+bash plugins/remotion-helper/scripts/analyze-project.sh {project-path}
+```
+
+脚本会输出 JSON 格式的项目信息：
+```json
+{
+  "name": "...",
+  "description": "...",
+  "features": [...],
+  "techStack": [...],
+  "logo": "...",
+  "screenshots": [...],
+  "website": "...",
+  "repository": "..."
+}
+```
+
+**备选方案**（如果脚本不存在或输出为空）：
+1. 手动扫描项目目录，提取 README.md、package.json
 2. 搜索图片资源（logo.png, screenshot*.png 等）
 3. 询问用户补充信息（使用 AskUserQuestion）
 4. 整理为 ProjectInfo 结构
