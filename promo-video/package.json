@@ -1,0 +1,22 @@
+{
+  "name": "yuzq-plugins-promo",
+  "version": "1.0.0",
+  "description": "yuzq-plugins 宣传视频 - Claude Code 插件市场",
+  "scripts": {
+    "studio": "remotion studio",
+    "build": "remotion build",
+    "render": "remotion render src/index.tsx PromoVideo out/promo.mp4",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.267",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.267"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.18",
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  }
+}

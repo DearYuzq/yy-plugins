@@ -228,6 +228,68 @@ npx remotion render src/index.tsx PromoVideo out/{output-file}.mp4
 - 所有场景组件使用 SafeZone 包裹
 - 字体大小不低于最小字号规范
 
+## 常见问题与解决方案
+
+### remotion.config.ts 配置 API
+
+**问题**：Remotion v4 配置 API 有变更，旧方法不存在。
+
+```typescript
+// ❌ 错误（已废弃）
+Config.setDefaultFP(30);
+Config.setDefaultFPS(30);
+
+// ✅ 正确（v4.0.424+）
+Config.overrideFps(30);
+```
+
+**推荐配置**：
+```typescript
+import { Config } from '@remotion/cli/config';
+
+Config.overrideFps(30);
+// 可选：设置并发数、输出格式等
+```
+
+### Chrome Headless Shell 下载超时
+
+**问题**：首次渲染时需要下载 Chrome Headless Shell，可能因网络问题超时。
+
+**解决方案**：
+1. 预先下载：`npx remotion browser ensure`
+2. 使用代理：设置 `HTTP_PROXY` / `HTTPS_PROXY` 环境变量
+3. 手动下载后放到缓存目录：`~/.cache/remotion-browser/`
+
+### 依赖版本兼容
+
+**推荐版本**（截至 2025-05）：
+```json
+{
+  "dependencies": {
+    "@remotion/cli": "^4.0.267",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.267"
+  }
+}
+```
+
+### 渲染命令
+
+```bash
+# 预览（开发模式）
+npx remotion studio
+
+# 渲染 MP4
+npx remotion render src/index.tsx PromoVideo out/promo.mp4
+
+# 指定参数渲染
+npx remotion render src/index.tsx PromoVideo out/promo.mp4 \
+  --width 1920 \
+  --height 1080 \
+  --fps 30
+```
+
 ## 输出格式
 
 完成后返回：

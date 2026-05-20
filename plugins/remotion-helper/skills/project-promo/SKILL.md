@@ -162,3 +162,47 @@ npx remotion --version  # 检测 Remotion（可选）
 - 默认渲染分辨率 1920x1080 @ 30fps
 - 输出格式为 MP4 (H.264)
 - 生成后可在 Remotion Studio 中预览和调整
+
+## 常见问题
+
+### Chrome Headless Shell 下载超时
+
+首次渲染时需要下载 Chrome Headless Shell（约 150MB），可能因网络问题超时。
+
+**解决方案**：
+```bash
+# 方案 1: 预先下载浏览器
+npx remotion browser ensure
+
+# 方案 2: 使用代理
+export HTTPS_PROXY=http://your-proxy:port
+npx remotion render ...
+
+# 方案 3: 手动下载后放到缓存目录
+# 下载地址: https://www.remotion.dev/chrome-headless-shell
+# 放到: ~/.cache/remotion-browser/
+```
+
+### remotion.config.ts 配置 API
+
+Remotion v4 配置 API 有变更，注意使用正确的方法：
+
+```typescript
+import { Config } from '@remotion/cli/config';
+
+// ✅ 正确（v4.0.424+）
+Config.overrideFps(30);
+
+// ❌ 错误（已废弃）
+Config.setDefaultFP(30);      // 不存在
+Config.setDefaultFPS(30);     // 不存在
+```
+
+### 依赖安装慢
+
+Remotion 依赖较多（约 180 个包），安装可能需要几分钟。
+
+```bash
+# 使用国内镜像加速
+npm install --registry=https://registry.npmmirror.com
+```
