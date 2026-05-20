@@ -56,6 +56,18 @@
       },
       "keywords": ["claude-md", "initialization", "rules", "project-setup", "scene-recommendation"],
       "category": "utility"
+    },
+    {
+      "name": "remotion-helper",
+      "source": "./plugins/remotion-helper",
+      "description": "项目宣传视频生成器 - 自动为项目生成美观的宣传视频，支持6种风格、自动提取项目信息",
+      "version": "1.0.0",
+      "author": {
+        "name": "yuzq",
+        "email": "yuzqmr@foxmail.com"
+      },
+      "keywords": ["remotion", "video", "promo", "animation", "marketing", "project-intro"],
+      "category": "development"
     }
   ]
 }
