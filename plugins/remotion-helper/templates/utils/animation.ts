@@ -2,6 +2,12 @@
  * Animation Utilities - 动画参数工具函数
  *
  * 统一管理各风格的动画参数，避免硬编码。
+ * 支持 9 种风格：tech, saas, open-source, minimal, neon, corporate, brutalist, editorial, ethereal
+ *
+ * 设计参数体系（继承 taste-skill）：
+ * - DESIGN_VARIANCE: 8 (1=对称, 10=艺术混沌)
+ * - MOTION_INTENSITY: 6 (1=静态, 10=电影级)
+ * - VISUAL_DENSITY: 4 (1=画廊, 10=驾驶舱)
  */
 
 import {SpringConfig} from 'remotion';
@@ -39,6 +45,22 @@ export const animationConfigs: Record<string, SpringConfig> = {
     stiffness: 100,
     damping: 18,
     mass: 1,
+  },
+  // 新增 3 种高端风格
+  brutalist: {
+    stiffness: 220,
+    damping: 12,
+    mass: 0.9,
+  },
+  editorial: {
+    stiffness: 80,
+    damping: 22,
+    mass: 1.2,
+  },
+  ethereal: {
+    stiffness: 60,
+    damping: 25,
+    mass: 1.5,
   },
 };
 

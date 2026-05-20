@@ -2,24 +2,38 @@
  * Minimal Style - 极简风格
  *
  * 大量留白，文字为主
- * 黑白灰配色 + 单色点缀
+ * 温暖单色调配色 + 柔和粉彩点缀
  * 优雅缓动，适合高端产品
+ *
+ * 设计升级：
+ * - 温暖单色调：#F7F6F3 背景 + #111111 文字
+ * - 柔和粉彩点缀
+ * - 无渐变、无重阴影
+ * - 字体升级：Newsreader + Geist Sans
  */
 
 export const minimalPalette = {
-  background: '#ffffff',
-  backgroundAlt: '#fafafa',
+  background: '#FFFFFF',
+  backgroundAlt: '#F7F6F3',    // 温暖奶油色（原 #fafafa）
+  backgroundCream: '#FDFBF7',   // 更暖奶油
   primary: '#000000',
   secondary: '#666666',
-  accent: '#ff3366',  // 可配置的单色点缀
-  text: '#000000',
-  textMuted: '#999999',
-  border: '#e5e5e5',
+  accent: '#E61919',             // 编辑红（替代 #ff3366）
+  text: '#111111',               // 温暖黑（替代 #000000）
+  textMuted: '#666666',
+  textLight: '#888888',
+  border: '#EAEAEA',             // 柔和边框
+  // 柔和粉彩点缀
+  pastelRed: '#FDEBEC',
+  pastelBlue: '#E1F3FE',
+  pastelGreen: '#EDF3EC',
+  pastelYellow: '#FBF3DB',
 };
 
 export const minimalFonts = {
-  title: 'Inter Light, Inter, system-ui, sans-serif',
-  body: 'Inter, system-ui, sans-serif',
+  // 编辑衬线 + 现代无衬线
+  title: 'Newsreader, Playfair Display, Georgia, serif',
+  body: 'Geist Sans, Inter, system-ui, sans-serif',
 };
 
 export const minimalAnimation = {

@@ -100,16 +100,19 @@ const corporatePalette = {
 };
 ```
 
-### 2. 字体选择
+### 2. 字体选择（已升级，避免 Inter/Roboto）
 
 | 风格 | 标题字体 | 正文字体 | 代码字体 |
 |------|----------|----------|----------|
-| Tech | Inter Bold | Inter | JetBrains Mono |
-| SaaS | Poppins Bold | Inter | - |
-| Open Source | system-ui | system-ui | monospace |
-| Minimal | Inter Light | Inter | - |
-| Neon | Bold Sans | system-ui | - |
-| Corporate | Roboto Bold | Roboto | - |
+| Tech | JetBrains Mono | **Geist Sans** | JetBrains Mono |
+| SaaS | **Satoshi** | **Geist Sans** | - |
+| Open Source | **Switzer** | **Switzer** | **SF Mono** |
+| Minimal | **Newsreader** (衬线) | **Geist Sans** | - |
+| Neon | **Clash Display** | **Cabinet Grotesk** | - |
+| Corporate | **IBM Plex Sans** | **IBM Plex Sans** | - |
+| Brutalist | **Monument Extended** | **JetBrains Mono** | **VT323** |
+| Editorial | **Playfair Display** (衬线) | **Geist Sans** | **Geist Mono** |
+| Ethereal | **Cabinet Grotesk** | **Geist Sans** | - |
 
 ### 3. 布局设计
 
@@ -146,9 +149,70 @@ const corporatePalette = {
 
 #### 避免
 - 过多颜色混用
-- 过小字号（< 16px）
+- 过小字号（< 18px，视频最小字号）
 - 过密布局
 - 廉价动画效果
+
+### 5. 反模式清单（禁止）
+
+以下"AI 视觉陷阱"必须避免：
+
+#### 视觉反模式
+- **紫蓝 AI 渐变**：`linear-gradient(135deg, #6366f1, #8b5cf6)` 等典型 AI 配色
+- **过度发光**：`text-shadow: 0 0 40px #fff` 等刺眼效果
+- **随机浮动图标**：无意义的装饰性图标
+- **假复杂度**：卡片嵌套卡片嵌套卡片
+
+#### 布局反模式
+- **无休止居中**：所有内容都居中
+- **克隆布局**：左文字/右图片重复出现
+- **假统计数字**："10,000+ users"、"99.9% uptime" 等
+
+#### 字体反模式
+- **禁用字体**：Inter、Roboto、Arial、Open Sans（高端项目）
+- **巨大标题 + 弱小副文**：极端比例失衡
+- **渐变文字**：作为"高端"捷径的渐变文字
+
+#### 内容反模式
+- **AI 套话**："释放"、"提升"、"下一代"、"无缝"
+- **假公司名**：Acme、Nexus、Flowbit
+- **全大写标题**：除特定风格（Neon、Brutalist）外
+
+### 6. 新增高端风格
+
+#### Brutalist（工业粗野主义）
+```typescript
+const brutalistPalette = {
+  background: '#0A0A0A',       // 深黑
+  text: '#EAEAEA',             // 亮灰
+  accent: '#E61919',           // 强红（唯一强调色）
+  border: '#1A1A1A',
+};
+// 强制规则：borderRadius: 0, 严格网格, 可见分隔线
+```
+
+#### Editorial（编辑杂志）
+```typescript
+const editorialPalette = {
+  background: '#FFFFFF',
+  backgroundAlt: '#F7F6F3',    // 温暖奶油
+  text: '#111111',
+  accent: '#E61919',           // 编辑红
+  pastelRed: '#FDEBEC',        // 柔和粉彩点缀
+};
+// 特点：极端字体比例(72px/24px), 大量留白, 编辑衬线
+```
+
+#### Ethereal（空灵玻璃）
+```typescript
+const etherealPalette = {
+  background: '#050505',
+  backgroundGradient: 'radial-gradient(ellipse at center, #1a1a2e 0%, #050505 70%)',
+  accent: '#00D9FF',           // 冷蓝光
+  glow: 'rgba(0, 217, 255, 0.15)',
+};
+// 特点：重度毛玻璃, 柔和发光边框, 优雅缓动
+```
 
 ## 输出格式
 

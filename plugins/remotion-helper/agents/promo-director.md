@@ -90,12 +90,15 @@ Scene 5 (50-60s): CTA + 联系方式
 
 | 风格 | 配色方案 | 字体选择 | 动画参数 |
 |------|----------|----------|----------|
-| Tech | 深蓝紫渐变 | JetBrains Mono / Inter | stiffness: 200, damping: 15 |
-| SaaS | 浅蓝白 | Inter / Poppins | stiffness: 100, damping: 20 |
-| Open Source | GitHub 黑白 | system-ui | stiffness: 150, damping: 15 |
-| Minimal | 黑白灰+单色 | Inter Light | stiffness: 80, damping: 20 |
-| Neon | 纯黑+霓虹粉紫 | Bold Sans | stiffness: 300, damping: 10 |
-| Corporate | 浅灰蓝 | Roboto | stiffness: 100, damping: 18 |
+| Tech | 深蓝紫渐变（饱和度降低） | JetBrains Mono / Geist Sans | stiffness: 200, damping: 15 |
+| SaaS | 浅蓝白（单强调色） | Satoshi / Geist Sans | stiffness: 100, damping: 20 |
+| Open Source | GitHub 黑白+绿 | Switzer / SF Mono | stiffness: 150, damping: 15 |
+| Minimal | 温暖单色调+柔和粉彩 | Newsreader / Geist Sans | stiffness: 80, damping: 20 |
+| Neon | 纯黑+饱和度降低霓虹 | Clash Display / Cabinet Grotesk | stiffness: 300, damping: 10 |
+| Corporate | 浅灰蓝 | IBM Plex Sans / Geist Sans | stiffness: 100, damping: 18 |
+| Brutalist | 深黑+强红+CRT扫描线 | Monument Extended / JetBrains Mono | stiffness: 220, damping: 12 |
+| Editorial | 温暖奶油+编辑红衬线 | Playfair Display / Geist Sans | stiffness: 80, damping: 22 |
+| Ethereal | 深黑+径向渐变+毛玻璃 | Cabinet Grotesk / Geist Sans | stiffness: 60, damping: 25 |
 
 ### 4. Remotion 项目创建
 

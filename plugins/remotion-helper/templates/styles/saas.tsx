@@ -1,27 +1,36 @@
 /**
  * SaaS Style - 商业产品风格
  *
- * 明亮专业背景，蓝绿系配色
- * 圆角卡片，柔和阴影
+ * 明亮专业背景，单强调色原则
+ * 圆角卡片，柔和漫射阴影
  * 平滑动画，适合商业产品
+ *
+ * 设计升级：
+ * - 单强调色：仅 #0ea5e9 一个主色
+ * - 字体升级：Satoshi 替代 Poppins
+ * - 漫射阴影替代硬阴影
  */
 
 export const saasPalette = {
   background: '#f8fafc',
   backgroundGradient: 'linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%)',
-  primary: '#0ea5e9',
-  secondary: '#06b6d4',
-  accent: '#10b981',
+  // 单强调色原则
+  primary: '#0ea5e9',        // 蓝色（唯一强调色）
+  secondary: '#06b6d4',      // 辅助色（仅在需要时）
+  accent: '#10b981',         // 绿色（CTA）
   text: '#1e293b',
   textMuted: '#64748b',
   cardBg: '#ffffff',
   cardBorder: '#e2e8f0',
-  shadow: '0 10px 40px -10px rgba(0, 0, 0, 0.1)',
+  // 漫射阴影替代硬阴影
+  shadow: '0 10px 60px -15px rgba(0, 0, 0, 0.08)',
+  shadowSoft: '0 4px 20px rgba(0, 0, 0, 0.04)',
 };
 
 export const saasFonts = {
-  title: 'Poppins, system-ui, sans-serif',
-  body: 'Inter, system-ui, sans-serif',
+  // 字体升级：Satoshi 替代 Poppins
+  title: 'Satoshi, Poppins, system-ui, sans-serif',
+  body: 'Geist Sans, Inter, system-ui, sans-serif',
 };
 
 export const saasAnimation = {

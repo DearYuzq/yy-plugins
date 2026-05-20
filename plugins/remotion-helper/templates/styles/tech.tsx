@@ -1,27 +1,36 @@
 /**
  * Tech Style - 科技风格
  *
- * 深色背景 + 渐变，蓝紫系配色
+ * 深色背景 + 渐变，蓝紫系配色（避免 AI 紫蓝渐变陷阱）
  * 等宽字体，快速利落动画
  * 适合技术产品、开发者工具
+ *
+ * 设计升级：
+ * - 主色饱和度降低，更沉稳
+ * - 字体升级为 Geist Sans
+ * - 单强调色原则
  */
 
 export const techPalette = {
   background: '#0f0f23',
   backgroundGradient: 'linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%)',
-  primary: '#6366f1',
-  secondary: '#8b5cf6',
+  // 主色饱和度降低，避免 AI 紫蓝渐变
+  primary: '#4f46e5',        // 更沉稳的紫蓝（原 #6366f1）
+  secondary: '#6366f1',      // 辅助色
   accent: '#a855f7',
   text: '#ffffff',
   textMuted: '#a1a1aa',
   cardBg: '#1e1e3f',
   codeBg: '#0d0d1a',
   border: '#2e2e5a',
+  // 单强调色
+  highlight: '#4f46e5',
 };
 
 export const techFonts = {
   title: 'JetBrains Mono, monospace',
-  body: 'Inter, system-ui, sans-serif',
+  // 字体升级：Geist Sans 替代 Inter
+  body: 'Geist Sans, Inter, system-ui, sans-serif',
   code: 'JetBrains Mono, monospace',
 };
 

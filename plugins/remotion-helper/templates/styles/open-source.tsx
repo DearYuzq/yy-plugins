@@ -2,8 +2,12 @@
  * Open Source Style - 开源项目风格
  *
  * GitHub 深色背景风格
- * 系统字体，简洁设计
+ * 专业字体，简洁设计
  * 黑白绿配色，适合开源项目
+ *
+ * 设计升级：
+ * - 字体升级：SF Mono + Switzer
+ * - 保持 GitHub 经典配色
  */
 
 export const openSourcePalette = {
@@ -19,9 +23,10 @@ export const openSourcePalette = {
 };
 
 export const openSourceFonts = {
-  title: '-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif',
-  body: '-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif',
-  code: 'SF Mono, Consolas, monospace',
+  // 字体升级：Switzer 替代 system-ui
+  title: 'Switzer, SF Pro Display, system-ui, sans-serif',
+  body: 'Switzer, SF Pro Text, system-ui, sans-serif',
+  code: 'SF Mono, JetBrains Mono, Consolas, monospace',
 };
 
 export const openSourceAnimation = {

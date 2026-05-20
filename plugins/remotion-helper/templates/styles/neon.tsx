@@ -2,25 +2,33 @@
  * Neon Style - 霓虹风格
  *
  * 纯黑背景 + 霓虹发光效果
- * 粉紫青配色，粗体字体
+ * 粉紫青配色（饱和度降低），粗体字体
  * 快速闪烁动画，适合游戏/潮流产品
+ *
+ * 设计升级：
+ * - 霓虹饱和度降低，避免刺眼
+ * - 发光效果精细化（透明度控制）
+ * - 字体升级：Clash Display + Cabinet Grotesk
  */
 
 export const neonPalette = {
   background: '#000000',
-  primary: '#ff00ff',    // 粉色
-  secondary: '#00ffff',  // 青色
-  accent: '#ffff00',     // 黄色
+  // 饱和度降低的霓虹色
+  primary: '#E91E8C',        // 粉色（替代 #ff00ff，降低饱和度）
+  secondary: '#00D4D4',      // 青色（替代 #00ffff）
+  accent: '#FFD700',         // 黄色（替代 #ffff00）
   text: '#ffffff',
-  textMuted: '#808080',
-  glowPink: '0 0 20px #ff00ff, 0 0 40px #ff00ff80',
-  glowCyan: '0 0 20px #00ffff, 0 0 40px #00ffff80',
-  glowYellow: '0 0 20px #ffff00, 0 0 40px #ffff0080',
+  textMuted: '#888888',
+  // 精细化发光效果（透明度控制）
+  glowPink: '0 0 20px rgba(233, 30, 140, 0.4), 0 0 40px rgba(233, 30, 140, 0.2)',
+  glowCyan: '0 0 20px rgba(0, 212, 212, 0.4), 0 0 40px rgba(0, 212, 212, 0.2)',
+  glowYellow: '0 0 20px rgba(255, 215, 0, 0.4), 0 0 40px rgba(255, 215, 0, 0.2)',
 };
 
 export const neonFonts = {
-  title: 'Montserrat Black, Impact, sans-serif',
-  body: 'Montserrat, system-ui, sans-serif',
+  // 字体升级：Clash Display + Cabinet Grotesk
+  title: 'Clash Display, Impact, sans-serif',
+  body: 'Cabinet Grotesk, Montserrat, system-ui, sans-serif',
 };
 
 export const neonAnimation = {

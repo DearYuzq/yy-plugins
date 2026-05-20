@@ -4,6 +4,10 @@
  * 浅灰蓝背景，商务字体
  * 规整动画，蓝系配色
  * 适合企业级、B2B 产品
+ *
+ * 设计升级：
+ * - 字体升级：IBM Plex Sans 替代 Roboto
+ * - 保持专业商务感
  */
 
 export const corporatePalette = {
@@ -21,8 +25,9 @@ export const corporatePalette = {
 };
 
 export const corporateFonts = {
-  title: 'Roboto, system-ui, sans-serif',
-  body: 'Roboto, system-ui, sans-serif',
+  // 字体升级：IBM Plex Sans 替代 Roboto
+  title: 'IBM Plex Sans, system-ui, sans-serif',
+  body: 'IBM Plex Sans, Geist Sans, system-ui, sans-serif',
 };
 
 export const corporateAnimation = {
